@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -110,6 +111,14 @@ app.get('/health', async (req, res) => {
 // Sign up endpoint
 app.post('/api/auth/signup', async (req, res) => {
   try {
+    // Check if database pool is initialized
+    if (!pool) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not ready. Please try again in a moment.'
+      });
+    }
+
     const { name, email, password, address, householdType, city, subdivision, phoneNumber } = req.body;
 
     // Validate required fields
@@ -159,8 +168,7 @@ app.post('/api/auth/signup', async (req, res) => {
       });
     }
 
-    // Hash password (simple hash for now, you should use bcrypt in production)
-    const bcrypt = require('bcryptjs');
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert new user
@@ -178,6 +186,7 @@ app.post('/api/auth/signup', async (req, res) => {
 
   } catch (error) {
     console.error('Sign up error:', error);
+    console.error('Error stack:', error.stack);
     
     // Handle MySQL duplicate entry error
     if (error.code === 'ER_DUP_ENTRY') {
@@ -190,7 +199,8 @@ app.post('/api/auth/signup', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message || 'Unknown error',
+      errorCode: error.code
     });
   }
 });
@@ -198,6 +208,14 @@ app.post('/api/auth/signup', async (req, res) => {
 // Login endpoint
 app.post('/api/auth/login', async (req, res) => {
   try {
+    // Check if database pool is initialized
+    if (!pool) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not ready. Please try again in a moment.'
+      });
+    }
+
     const { email, password } = req.body;
 
     // Validate required fields
@@ -233,7 +251,6 @@ app.post('/api/auth/login', async (req, res) => {
     const user = users[0];
 
     // Verify password
-    const bcrypt = require('bcryptjs');
     const isPasswordValid = await bcrypt.compare(password, user.Password);
 
     if (!isPasswordValid) {
@@ -261,11 +278,14 @@ app.post('/api/auth/login', async (req, res) => {
 
   } catch (error) {
     console.error('Login error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
     
     res.status(500).json({
       success: false,
       message: 'Internal server error. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message || 'Unknown error',
+      errorCode: error.code
     });
   }
 });
