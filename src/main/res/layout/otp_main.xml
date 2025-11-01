@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05121C"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Reset Password to"
+            android:fontFamily="@font/inter_18pt_black"
+            android:textColor="@android:color/white"
+            android:textSize="28sp"
+            android:layout_marginTop="70dp"/>
+
+        <!-- App Name -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wattwise"
+            android:textColor="@android:color/white"
+            android:textSize="60sp"
+            android:fontFamily="@font/squadaone_regular"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Digital Energy Tracker"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginEnd="45dp"
+            android:layout_marginTop="-12dp"
+            android:layout_marginBottom="80dp"/>
+
+        <!-- Forgot Password Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Forgot your Password?"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="19sp"
+            android:layout_marginBottom="10dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="We will email you a code to reset your password."
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginBottom="15dp"/>
+
+        <!-- Email Input -->
+        <EditText
+            android:id="@+id/email_address_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <Button
+            android:id="@+id/resend_btn"
+            android:layout_width="110dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="100dp"
+            android:layout_marginTop="1dp"
+            android:backgroundTint="#05121C"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="Resend Code"
+            android:textAllCaps="false"
+            android:textColor="@android:color/white"
+            android:textSize="18sp" />
+
+        <!-- Send Button -->
+        <Button
+            android:id="@+id/send_btn"
+            android:layout_width="155dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="40dp"
+            android:background="@drawable/rounded_button2"
+            android:backgroundTint="@android:color/white"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="Send"
+            android:textAllCaps="false"
+            android:textColor="@android:color/black"
+            android:textSize="22sp" />
+
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@android:color/darker_gray"
+            android:layout_marginTop="70dp"
+            android:layout_marginBottom="40dp" />
+
+        <!-- Enter Code Label -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enter Verification Code"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:layout_marginBottom="10dp"/>
+
+        <!-- Code Input -->
+        <EditText
+            android:id="@+id/code_input"
+            android:layout_width="200dp"
+            android:layout_height="48dp"
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="6-digit Code"
+            android:inputType="number"
+            android:gravity="center"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <!-- Verify Button -->
+        <Button
+            android:id="@+id/verify_btn"
+            android:layout_width="140dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="0dp"
+            android:layout_marginTop="30dp"
+            android:layout_marginEnd="0dp"
+            android:background="@drawable/rounded_button2"
+            android:backgroundTint="@android:color/white"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="Verify Code"
+            android:textAllCaps="false"
+            android:textColor="@android:color/black"
+            android:textSize="20sp" />
+
+
+    </LinearLayout>
+</RelativeLayout>

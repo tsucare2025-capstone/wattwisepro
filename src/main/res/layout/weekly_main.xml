@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:itemIconSize="33dp"
+        app:itemIconTint="@color/bottom_nav_colors"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="350dp"
+        android:layout_height="70dp"
+        android:background="@drawable/rounded_button3squadacolor"
+        android:fontFamily="@font/squadaone_regular"
+        android:gravity="center"
+        android:text="@string/weekly_usage"
+        android:textColor="#FFFFFF"
+        android:textSize="45sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.213" />
+
+    <Button
+        android:id="@+id/button5"
+        android:layout_width="42dp"
+        android:layout_height="40dp"
+        android:background="@drawable/baseline_arrow_back_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.02"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.13"
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:contentDescription="@string/wattwiselogo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.026"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.024"
+        app:srcCompat="@drawable/w_wise_logo" />
+
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@drawable/line_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.037" />
+
+    <Button
+        android:id="@+id/button6"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/baseline_account_circle_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.950"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.05"
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/kwh"
+        android:textColor="@color/black"
+        android:textSize="23sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.715"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.353" />
+
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:contentDescription="@string/weeklycalendar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.079"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.355"
+        app:srcCompat="@drawable/baseline_calendar_month_24" />
+
+    <TextView
+        android:id="@+id/textViewFirstWeek"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.42" />
+
+    <TextView
+        android:id="@+id/FirstWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="14dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/first_week"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFirstWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFirstWeek"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewFirstWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewFirstWeek"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/LineFirstWeek"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewFirstWeek"
+        app:layout_constraintEnd_toEndOf="@id/textViewFirstWeek"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@id/textViewFirstWeek"
+        app:layout_constraintTop_toTopOf="@id/textViewFirstWeek" />
+
+    <TextView
+        android:id="@+id/kwhFirstWeek"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFirstWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFirstWeek"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@+id/textViewFirstWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewFirstWeek"
+        app:layout_constraintVertical_bias="0.5"/>
+
+    <TextView
+        android:id="@+id/textViewSecondWeek"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.512"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.59" />
+
+    <TextView
+        android:id="@+id/SecondWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="14dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/second_week"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewSecondWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewSecondWeek"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewSecondWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewSecondWeek"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/LineSecondWeek"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line2"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewSecondWeek"
+        app:layout_constraintEnd_toEndOf="@id/textViewSecondWeek"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@id/textViewSecondWeek"
+        app:layout_constraintTop_toTopOf="@id/textViewSecondWeek"/>
+
+    <TextView
+        android:id="@+id/kwhSecondWeek"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewSecondWeek"
+        app:layout_constraintEnd_toEndOf="@id/textViewSecondWeek"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewSecondWeek"
+        app:layout_constraintTop_toTopOf="@id/textViewSecondWeek"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+    <TextView
+        android:id="@+id/textViewThirdWeek"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.512"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.71" />
+
+    <TextView
+        android:id="@+id/ThirdWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="14dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/third_week"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewThirdWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewThirdWeek"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewThirdWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewThirdWeek"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/LineThirdWeek"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line3"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewThirdWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewThirdWeek"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewThirdWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewThirdWeek" />
+
+    <TextView
+        android:id="@+id/kwhThirdWeek"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewThirdWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewThirdWeek"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@+id/textViewThirdWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewThirdWeek"
+        app:layout_constraintVertical_bias="0.5"/>
+
+    <TextView
+        android:id="@+id/textViewFourthWeek"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.512"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.83" />
+
+    <TextView
+        android:id="@+id/FourthWeek"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="14dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/fourth_week"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFourthWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFourthWeek"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewFourthWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewFourthWeek"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <TextView
+        android:id="@+id/LineFourthWeek"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line4"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFourthWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFourthWeek"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewFourthWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewFourthWeek"/>
+
+    <TextView
+        android:id="@+id/kwhFourthWeek"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFourthWeek"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFourthWeek"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@+id/textViewFourthWeek"
+        app:layout_constraintTop_toTopOf="@+id/textViewFourthWeek"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

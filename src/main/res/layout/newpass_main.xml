@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05121C"
+    android:padding="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <!-- Title -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="70dp"
+                android:fontFamily="@font/inter_18pt_black"
+                android:text="Reset Password"
+                android:textColor="@android:color/white"
+                android:textSize="28sp" />
+
+            <!-- App Name -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="WattWise"
+                android:textColor="@android:color/white"
+                android:textSize="60sp"
+                android:fontFamily="@font/squadaone_regular"
+                android:layout_marginBottom="60dp" />
+
+            <!-- New Password -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="New Password"
+                android:fontFamily="@font/inter_18pt_black"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="22dp"/>
+
+            <EditText
+                android:id="@+id/new_password_input"
+                android:layout_width="310dp"
+                android:layout_height="48dp"
+                android:background="@drawable/rounded_button"
+                android:fontFamily="@font/inter_18pt_black"
+                android:hint="Enter new password"
+                android:inputType="textPassword"
+                android:padding="15dp"
+                android:textSize="15sp"
+                android:textColor="@android:color/black" />
+
+            <!-- Confirm Password -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Confirm Password"
+                android:fontFamily="@font/inter_18pt_black"
+                android:textColor="@android:color/white"
+                android:layout_marginStart="18dp"
+                android:layout_marginTop="25dp"/>
+
+            <EditText
+                android:id="@+id/confirm_password_input"
+                android:layout_width="310dp"
+                android:layout_height="48dp"
+                android:background="@drawable/rounded_button"
+                android:fontFamily="@font/inter_18pt_black"
+                android:hint="Confirm new password"
+                android:inputType="textPassword"
+                android:padding="15dp"
+                android:textSize="15sp"
+                android:textColor="@android:color/black" />
+
+            <!-- Reset Button -->
+            <Button
+                android:id="@+id/reset_password_btn"
+                android:layout_width="160dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="60dp"
+                android:background="@drawable/rounded_button2"
+                android:backgroundTint="@android:color/white"
+                android:fontFamily="@font/squadaone_regular"
+                android:text="Reset Password"
+                android:textAllCaps="false"
+                android:textColor="@android:color/black"
+                android:textSize="20sp" />
+
+        </LinearLayout>
+    </ScrollView>
