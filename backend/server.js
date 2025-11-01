@@ -195,6 +195,81 @@ app.post('/api/auth/signup', async (req, res) => {
   }
 });
 
+// Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Find user by email
+    const [users] = await pool.execute(
+      'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE Email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const user = users[0];
+
+    // Verify password
+    const bcrypt = require('bcryptjs');
+    const isPasswordValid = await bcrypt.compare(password, user.Password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Login successful - return user data (excluding password)
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        userId: user.UserID,
+        name: user.Name,
+        email: user.Email,
+        address: user.Address,
+        householdType: user.HouseholdType,
+        city: user.City,
+        subdivision: user.Subdivision,
+        phoneNumber: user.PhoneNumber
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error. Please try again later.',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
