@@ -15,15 +15,27 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database connection configuration
 // Railway provides these environment variables
+// Try TCP Proxy first (for external connections), then Private Domain (for internal)
 const dbConfig = {
-  host: process.env.RAILWAY_PRIVATE_DOMAIN || process.env.MYSQL_HOST,
-  port: process.env.MYSQL_PORT || 3306,
-  user: process.env.MYSQLUSER || process.env.MYSQL_USER,
-  password: process.env.MYSQL_ROOT_PASSWORD || process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE || 'smart_energy_tracking',
+  host: process.env.RAILWAY_TCP_PROXY_DOMAIN || 
+        process.env.RAILWAY_PRIVATE_DOMAIN || 
+        process.env.MYSQL_HOST,
+  port: process.env.RAILWAY_TCP_PROXY_PORT || 
+        process.env.MYSQL_PORT || 
+        3306,
+  user: process.env.MYSQLUSER || 
+        process.env.MYSQL_USER || 
+        'root',
+  password: process.env.MYSQL_ROOT_PASSWORD || 
+            process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQL_DATABASE || 
+            'smart_energy_tracking',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  // Add connection timeout
+  connectTimeout: 10000,
+  acquireTimeout: 10000
 };
 
 // Create connection pool
@@ -32,6 +44,16 @@ let pool;
 // Initialize database connection
 async function initDatabase() {
   try {
+    // Log what we're trying to connect with
+    console.log('🔌 Attempting database connection...');
+    console.log('Database config:', {
+      host: dbConfig.host || 'NOT SET',
+      port: dbConfig.port || 'NOT SET',
+      user: dbConfig.user || 'NOT SET',
+      database: dbConfig.database || 'NOT SET',
+      password: dbConfig.password ? '***SET***' : 'NOT SET'
+    });
+    
     pool = mysql.createPool(dbConfig);
     
     // Test connection
@@ -43,13 +65,27 @@ async function initDatabase() {
     await createTables();
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
+    console.error('Error code:', error.code);
     console.error('Database config:', {
-      host: dbConfig.host,
-      port: dbConfig.port,
-      user: dbConfig.user,
-      database: dbConfig.database
+      host: dbConfig.host || 'NOT SET',
+      port: dbConfig.port || 'NOT SET',
+      user: dbConfig.user || 'NOT SET',
+      database: dbConfig.database || 'NOT SET'
     });
+    
+    // Log all environment variables related to MySQL
+    console.log('Environment variables check:');
+    console.log('- RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET');
+    console.log('- MYSQL_HOST:', process.env.MYSQL_HOST || 'NOT SET');
+    console.log('- MYSQL_PORT:', process.env.MYSQL_PORT || 'NOT SET');
+    console.log('- MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
+    console.log('- MYSQL_USER:', process.env.MYSQL_USER || 'NOT SET');
+    console.log('- MYSQL_ROOT_PASSWORD:', process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET');
+    console.log('- MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET');
+    console.log('- MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'NOT SET');
+    
     // Retry connection after 5 seconds
+    console.log('⏳ Retrying connection in 5 seconds...');
     setTimeout(initDatabase, 5000);
   }
 }
