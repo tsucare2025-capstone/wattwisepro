@@ -1,5 +1,13 @@
 # WattWise Pro Setup Guide
 
+## 📚 Detailed Guides
+
+For more detailed instructions, see:
+- **[ANDROID_SETUP_GUIDE.md](./ANDROID_SETUP_GUIDE.md)** - Complete Android app configuration guide
+- **[RAILWAY_DEPLOYMENT_GUIDE.md](./RAILWAY_DEPLOYMENT_GUIDE.md)** - Step-by-step Railway deployment (if you already have MySQL)
+
+---
+
 ## 📱 Android App Setup
 
 ### 1. Update Backend URL
