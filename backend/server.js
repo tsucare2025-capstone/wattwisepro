@@ -14,23 +14,29 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database connection configuration
 // Railway provides these environment variables
+// Check for Railway MySQL service variables first, then fallback to standard names
 const dbConfig = {
-  host: process.env.RAILWAY_PRIVATE_DOMAIN || process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
-  port: process.env.MYSQLPORT || process.env.MYSQL_PORT || 3306,
-  user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
-  password: process.env.MYSQL_ROOT_PASSWORD || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
-  database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'railway',
+  host: process.env.MYSQLHOST || 
+        process.env.RAILWAY_PRIVATE_DOMAIN || 
+        process.env.MYSQL_HOST || 
+        'mysql.railway.internal',
+  port: process.env.MYSQLPORT || 
+        process.env.RAILWAY_TCP_PROXY_PORT || 
+        process.env.MYSQL_PORT || 
+        3306,
+  user: process.env.MYSQLUSER || 
+        process.env.MYSQL_USER || 
+        'root',
+  password: process.env.MYSQLPASSWORD || 
+            process.env.MYSQL_ROOT_PASSWORD || 
+            process.env.MYSQL_PASSWORD,
+  database: process.env.MYSQLDATABASE || 
+             process.env.MYSQL_DATABASE || 
+             'railway',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 };
-
-// Log environment variables for debugging (remove sensitive data in production)
-console.log('Environment Variables Check:');
-console.log('RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'not set');
-console.log('MYSQLUSER:', process.env.MYSQLUSER || 'not set');
-console.log('MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'not set');
-console.log('MYSQL_ROOT_PASSWORD:', process.env.MYSQL_ROOT_PASSWORD ? '***set***' : 'not set');
 
 // Create connection pool
 let pool;
@@ -49,20 +55,22 @@ async function initDatabase() {
     await createTables();
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
-    console.error('Database config:', {
+    console.error('Database config (sensitive data hidden):', {
       host: dbConfig.host,
       port: dbConfig.port,
-      user: dbConfig.user,
+      user: dbConfig.user || 'UNDEFINED',
       database: dbConfig.database,
-      password: dbConfig.password ? '***set***' : 'not set'
+      password: dbConfig.password ? '***SET***' : 'UNDEFINED'
     });
-    console.error('All MySQL-related env vars:', {
-      RAILWAY_PRIVATE_DOMAIN: process.env.RAILWAY_PRIVATE_DOMAIN || 'not set',
-      MYSQLHOST: process.env.MYSQLHOST || 'not set',
-      MYSQLUSER: process.env.MYSQLUSER || 'not set',
-      MYSQL_ROOT_PASSWORD: process.env.MYSQL_ROOT_PASSWORD ? '***set***' : 'not set',
-      MYSQL_DATABASE: process.env.MYSQL_DATABASE || 'not set',
-      MYSQLDATABASE: process.env.MYSQLDATABASE || 'not set'
+    console.error('Available MySQL env vars:', {
+      MYSQLHOST: process.env.MYSQLHOST ? 'SET' : 'NOT SET',
+      MYSQLPORT: process.env.MYSQLPORT ? 'SET' : 'NOT SET',
+      MYSQLUSER: process.env.MYSQLUSER ? 'SET' : 'NOT SET',
+      MYSQLPASSWORD: process.env.MYSQLPASSWORD ? 'SET' : 'NOT SET',
+      MYSQLDATABASE: process.env.MYSQLDATABASE ? 'SET' : 'NOT SET',
+      RAILWAY_PRIVATE_DOMAIN: process.env.RAILWAY_PRIVATE_DOMAIN ? 'SET' : 'NOT SET',
+      MYSQL_ROOT_PASSWORD: process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET',
+      MYSQL_DATABASE: process.env.MYSQL_DATABASE ? 'SET' : 'NOT SET'
     });
     // Retry connection after 5 seconds
     setTimeout(initDatabase, 5000);
