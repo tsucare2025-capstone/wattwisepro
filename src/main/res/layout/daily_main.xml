@@ -1,0 +1,554 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <FrameLayout
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        app:itemIconSize="33dp"
+        app:itemIconTint="@color/bottom_nav_colors"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="350dp"
+        android:layout_height="70dp"
+        android:background="@drawable/rounded_button3squadacolor"
+        android:fontFamily="@font/squadaone_regular"
+        android:gravity="center"
+        android:text="@string/daily"
+        android:textColor="#FFFFFF"
+        android:textSize="45sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.213" />
+
+    <Button
+        android:id="@+id/btn_back"
+        android:layout_width="42dp"
+        android:layout_height="40dp"
+        android:background="@drawable/baseline_arrow_back_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.02"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.13"
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="70dp"
+        android:layout_height="70dp"
+        android:contentDescription="@string/wattwiselogo"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.026"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.024"
+        app:srcCompat="@drawable/w_wise_logo" />
+
+
+    <TextView
+        android:id="@+id/textView3"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:background="@drawable/line_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.037" />
+
+    <Button
+        android:id="@+id/btn_profile"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:background="@drawable/baseline_account_circle_24"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.950"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.05"
+        tools:ignore="SpeakableTextPresentCheck,TouchTargetSizeCheck" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/kwh"
+        android:textColor="@color/black"
+        android:textSize="23sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.715"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.353" />
+
+    <ImageView
+        android:id="@+id/imageView5"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:contentDescription="@string/weeklycalendar"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.079"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.355"
+        app:srcCompat="@drawable/baseline_calendar_month_24" />
+
+    <TextView
+        android:id="@+id/textViewMon"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.42" />
+
+    <TextView
+        android:id="@+id/Monday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/mon"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewMon"
+        app:layout_constraintEnd_toEndOf="@+id/textViewMon"
+        app:layout_constraintHorizontal_bias="0.031"
+        app:layout_constraintStart_toStartOf="@+id/textViewMon"
+        app:layout_constraintTop_toTopOf="@+id/textViewMon"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineMon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewMon"
+        app:layout_constraintEnd_toEndOf="@id/textViewMon"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@id/textViewMon"
+        app:layout_constraintTop_toTopOf="@id/textViewMon" />
+
+    <TextView
+        android:id="@+id/kwhMon"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewMon"
+        app:layout_constraintEnd_toEndOf="@id/textViewMon"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewMon"
+        app:layout_constraintTop_toTopOf="@id/textViewMon"
+        app:layout_constraintVertical_bias="0.5"/>
+
+    <TextView
+        android:id="@+id/textViewTue"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:layout_marginTop="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.498" />
+
+    <TextView
+        android:id="@+id/Tuesday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/tue"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewTue"
+        app:layout_constraintEnd_toEndOf="@+id/textViewTue"
+        app:layout_constraintHorizontal_bias="0.031"
+        app:layout_constraintStart_toStartOf="@+id/textViewTue"
+        app:layout_constraintTop_toTopOf="@+id/textViewTue"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineTue"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewTue"
+        app:layout_constraintEnd_toEndOf="@id/textViewTue"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@id/textViewTue"
+        app:layout_constraintTop_toTopOf="@id/textViewTue" />
+
+    <TextView
+        android:id="@+id/kwhTue"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewTue"
+        app:layout_constraintEnd_toEndOf="@id/textViewTue"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewTue"
+        app:layout_constraintTop_toTopOf="@id/textViewTue"
+        app:layout_constraintVertical_bias="0.5"/>
+
+    <TextView
+        android:id="@+id/textViewWed"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.606" />
+
+    <TextView
+        android:id="@+id/Wednesday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/wed"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewWed"
+        app:layout_constraintEnd_toEndOf="@+id/textViewWed"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewWed"
+        app:layout_constraintTop_toTopOf="@+id/textViewWed"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineWed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line2"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewWed"
+        app:layout_constraintEnd_toEndOf="@id/textViewWed"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@id/textViewWed"
+        app:layout_constraintTop_toTopOf="@id/textViewWed"
+        tools:ignore="MissingConstraints" />
+
+    <TextView
+        android:id="@+id/kwhWed"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewWed"
+        app:layout_constraintEnd_toEndOf="@id/textViewWed"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewWed"
+        app:layout_constraintTop_toTopOf="@id/textViewWed"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+    <TextView
+        android:id="@+id/textViewThu"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.678" />
+
+    <TextView
+        android:id="@+id/Thursday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/thu2"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewThu"
+        app:layout_constraintEnd_toEndOf="@+id/textViewThu"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewThu"
+        app:layout_constraintTop_toTopOf="@+id/textViewThu"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineThur"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line3"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewThu"
+        app:layout_constraintEnd_toEndOf="@+id/textViewThu"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewThu"
+        app:layout_constraintTop_toTopOf="@+id/textViewThu"/>
+
+    <TextView
+        android:id="@+id/kwhThu"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewThu"
+        app:layout_constraintEnd_toEndOf="@id/textViewThu"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewThu"
+        app:layout_constraintTop_toTopOf="@id/textViewThu"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+    <TextView
+        android:id="@+id/textViewFri"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.75" />
+
+    <TextView
+        android:id="@+id/Friday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/fri"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFri"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFri"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewFri"
+        app:layout_constraintTop_toTopOf="@+id/textViewFri"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineFri"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line4"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewFri"
+        app:layout_constraintEnd_toEndOf="@+id/textViewFri"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewFri"
+        app:layout_constraintTop_toTopOf="@+id/textViewFri"/>
+
+    <TextView
+        android:id="@+id/kwhFri"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewFri"
+        app:layout_constraintEnd_toEndOf="@id/textViewFri"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewFri"
+        app:layout_constraintTop_toTopOf="@id/textViewFri"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+    <TextView
+        android:id="@+id/textViewSat"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.822" />
+
+    <TextView
+        android:id="@+id/Saturday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/sat"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewSat"
+        app:layout_constraintEnd_toEndOf="@+id/textViewSat"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewSat"
+        app:layout_constraintTop_toTopOf="@+id/textViewSat"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineSat"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line4"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewSat"
+        app:layout_constraintEnd_toEndOf="@+id/textViewSat"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewSat"
+        app:layout_constraintTop_toTopOf="@+id/textViewSat"/>
+
+    <TextView
+        android:id="@+id/kwhSat"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewSat"
+        app:layout_constraintEnd_toEndOf="@id/textViewSat"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewSat"
+        app:layout_constraintTop_toTopOf="@id/textViewSat"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+    <TextView
+        android:id="@+id/textViewSun"
+        android:layout_width="370dp"
+        android:layout_height="60dp"
+        android:background="@drawable/line2_sq"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.487"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.894" />
+
+    <TextView
+        android:id="@+id/Sunday"
+        android:layout_width="50dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:layout_marginBottom="13dp"
+        android:fontFamily="@font/squadaone_regular"
+        android:text="@string/sun"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewSun"
+        app:layout_constraintEnd_toEndOf="@+id/textViewSun"
+        app:layout_constraintHorizontal_bias="0.028"
+        app:layout_constraintStart_toStartOf="@+id/textViewSun"
+        app:layout_constraintTop_toTopOf="@+id/textViewSun"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <TextView
+        android:id="@+id/LineSun"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/line4"
+        android:textColor="@color/black"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="@+id/textViewSun"
+        app:layout_constraintEnd_toEndOf="@+id/textViewSun"
+        app:layout_constraintHorizontal_bias="0.502"
+        app:layout_constraintStart_toStartOf="@+id/textViewSun"
+        app:layout_constraintTop_toTopOf="@+id/textViewSun"/>
+
+    <TextView
+        android:id="@+id/kwhSun"
+        android:layout_width="80dp"
+        android:layout_height="30dp"
+        android:text="-----/kWh"
+        android:gravity="fill_vertical"
+        android:fontFamily="@font/squadaone_regular"
+        android:textColor="@color/black"
+        android:textSize="17sp"
+        app:layout_constraintBottom_toBottomOf="@id/textViewSun"
+        app:layout_constraintEnd_toEndOf="@id/textViewSun"
+        app:layout_constraintHorizontal_bias="1"
+        app:layout_constraintStart_toStartOf="@id/textViewSun"
+        app:layout_constraintTop_toTopOf="@id/textViewSun"
+        app:layout_constraintVertical_bias="0.5"/>
+
+
+
+
+
+
+
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>

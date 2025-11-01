@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05121C"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:padding="20dp">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/sign_up_in_to"
+            android:fontFamily="@font/inter_18pt_black"
+            android:textColor="@android:color/white"
+            android:textSize="28sp"
+            android:layout_marginTop="70dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Wattwise"
+            android:textColor="@android:color/white"
+            android:textSize="60sp"
+            android:fontFamily="@font/squadaone_regular"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Digital Energy Tracker"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginEnd="45dp"
+            android:layout_marginTop="-12dp"
+            android:layout_marginBottom="80dp"/>
+
+        <EditText
+            android:id="@+id/username_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="20dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Username"
+            android:inputType="textPersonName"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/email_address_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Email"
+            android:inputType="textEmailAddress"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/password_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/repeat_password_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Repeat Password"
+            android:inputType="textPassword"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/address_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Address"
+            android:inputType="textPostalAddress"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <Spinner
+            android:id="@+id/household_type_spinner"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/city_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="City"
+            android:inputType="text"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="Tarlac City"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/subdivision_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Subdivision"
+            android:inputType="text"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+        <EditText
+            android:id="@+id/phone_number_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="25dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="Phone Number"
+            android:inputType="phone"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp" />
+
+
+        <Button
+            android:id="@+id/create_btn"
+            android:layout_width="155dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="50dp"
+            android:background="@drawable/rounded_button2"
+            android:backgroundTint="@android:color/white"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="Create Account"
+            android:textAllCaps="false"
+            android:textColor="@android:color/black"
+            android:textSize="24sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Already have an account"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginTop="50dp"/>
+
+        <Button
+            android:id="@+id/tvLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Login"
+            android:layout_marginTop="-10dp"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="#00E676"
+            android:background="@android:color/transparent"
+            android:backgroundTint="@android:color/transparent"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+</ScrollView>

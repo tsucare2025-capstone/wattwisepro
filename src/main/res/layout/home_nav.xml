@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <Button
+        android:id="@+id/button"
+    android:text="Weekly" />
+
+    <Button
+        android:id="@+id/button4"
+    android:text="Monthly" />
+
+    <Button
+        android:id="@+id/btnKwh"
+    android:text="Kwh" />
+
+    <Button
+        android:id="@+id/btnDaily"
+    android:text="Daily" />
+
+    <Button
+        android:id="@+id/btnWeekly"
+    android:text="Weekly" />
+
+    <Button
+        android:id="@+id/btnMonthly"
+    android:text="Monthly" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

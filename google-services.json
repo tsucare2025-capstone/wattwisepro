@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "295872008589",
+    "project_id": "watt-wise-39e0f",
+    "storage_bucket": "watt-wise-39e0f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:295872008589:android:e1a2c166d470f3b499adc4",
+        "android_client_info": {
+          "package_name": "myapplication.test.wattwisepro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWVoESe8ibJuU3fCL9Uuw4-i3k0tKIomc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

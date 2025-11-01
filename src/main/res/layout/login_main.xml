@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#05121C"
+    android:padding="20dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="70dp"
+            android:fontFamily="@font/inter_18pt_black"
+            android:text="@string/log_in_to"
+            android:textColor="@android:color/white"
+            android:textSize="28sp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/wattwise"
+            android:textColor="@android:color/white"
+            android:textSize="60sp"
+            android:fontFamily="@font/squadaone_regular"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/digital_energy_tracker"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginEnd="45dp"
+            android:layout_marginTop="-12dp"
+            android:layout_marginBottom="80dp"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/username"
+            android:fontFamily="@font/inter_18pt_black"
+            android:textColor="@android:color/white"
+            android:gravity="start"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="22dp"/>
+
+        <EditText
+            android:id="@+id/username_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="3dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:inputType="textPersonName"
+            android:labelFor="@+id/editText"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:textColor="@android:color/black"
+            android:textSize="15sp"
+            android:hint="@string/enter_username"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/password"
+            android:fontFamily="@font/inter_18pt_black"
+            android:textColor="@android:color/white"
+            android:gravity="start"
+            android:layout_marginStart="18dp"
+            android:layout_marginTop="25dp"/>
+
+
+        <EditText
+            android:id="@+id/password_input"
+            android:layout_width="310dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="3dp"
+            android:autofillHints=""
+            android:background="@drawable/rounded_button"
+            android:fontFamily="@font/inter_18pt_black"
+            android:hint="@string/enter_password"
+            android:inputType="textPassword"
+            android:padding="15dp"
+            android:textSize="15sp"
+            android:textColor="@android:color/black" />
+
+        <TextView
+            android:id="@+id/forgot_password"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_gravity="end"
+            android:text="@string/forgot_password"
+            android:textColor="@android:color/white"
+            android:textSize="15sp"
+            android:fontFamily="@font/squadaone_regular"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginEnd="39dp"/>
+
+
+        <Button
+            android:id="@+id/login_btn"
+            android:layout_width="100dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="145dp"
+            android:background="@drawable/rounded_button2"
+            android:backgroundTint="@android:color/white"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="@string/log_in"
+            android:textAllCaps="false"
+            android:textColor="@android:color/black"
+            android:textSize="24sp" />
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/don_t_have_an_account"
+            android:fontFamily="@font/squadaone_regular"
+            android:textColor="@android:color/white"
+            android:textSize="14sp"
+            android:layout_marginTop="50dp"/>
+
+        <Button
+            android:id="@+id/signup_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-10dp"
+            android:background="@android:color/transparent"
+            android:fontFamily="@font/squadaone_regular"
+            android:text="@string/sign_up"
+            android:textColor="#00E676"
+            android:textStyle="bold"/>
+
+    </LinearLayout>
+</ScrollView>

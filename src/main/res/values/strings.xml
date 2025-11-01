@@ -1,0 +1,72 @@
+<resources>
+    <string name="app_name">WattWise Pro</string>
+    <string name="log_in_to">Log in to</string>
+    <string name="wattwise">Wattwise</string>
+    <string name="digital_energy_tracker">Digital Energy Tracker</string>
+    <string name="enter_username">Enter Username</string>
+    <string name="password">Password</string>
+    <string name="enter_password">Enter Password</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="log_in">Log In</string>
+    <string name="don_t_have_an_account">Don\'t have an account</string>
+    <string name="sign_up">Sign up</string>
+    <string name="username">Username</string>
+    <string name="sign_up_in_to">Sign up in to</string>
+    <string name="weekly_usage">Weekly Usage</string>
+    <string name="wattwiselogo">WattWiseLogo</string>
+    <string name="kwh">──────────────── kWh</string>
+    <string name="weeklycalendar">WeeklyCalendar</string>
+    <string name="first_week">First Week</string>
+    <string name="line">──────────────</string>
+    <string name="second_week">Second Week</string>
+    <string name="line2">──────────────</string>
+    <string name="third_week">Third Week</string>
+    <string name="line3">──────────────</string>
+    <string name="fourth_week">Fourth Week</string>
+    <string name="line4">──────────────</string>
+    <string name="daily">Daily</string>
+    <string name="mon">Mon</string>
+    <string name="wed">Wed</string>
+    <string name="thur">Thur</string>
+    <string name="fri">Fri</string>
+    <string name="tue">Tue</string>
+    <string name="sat">Sat</string>
+    <string name="sun">Sun</string>
+    <string name="tips">Tips</string>
+    <string name="history">History</string>
+    <string name="second_week2">Second Week</string>
+    <string name="monday">Monday</string>
+    <string name="tue2">Tue</string>
+    <string name="wed2">Wed</string>
+    <string name="thu">Thu</string>
+    <string name="fri2">Fri</string>
+    <string name="january">January</string>
+    <string name="february">February</string>
+    <string name="march">March</string>
+    <string name="april">April</string>
+    <string name="may">May</string>
+    <string name="june">June</string>
+    <string name="july">July</string>
+    <string name="august">August</string>
+    <string name="september">September</string>
+    <string name="october">October</string>
+    <string name="november">November</string>
+    <string name="december">December</string>
+    <string name="weekly">Weekly</string>
+    <string name="monthly">Monthly</string>
+    <string name="monthly_usage">Monthly Usage</string>
+    <string name="thu2">Thu</string>
+
+    <string-array name="appliances_list">
+        <item>Fan</item>
+        <item>Air Conditioner</item>
+        <item>Washing Machine</item>
+        <item>Refrigerator</item>
+        <item>Television</item>
+        <item>Computer</item>
+        <item>Light Bulb</item>
+        <item>Microwave</item>
+        <item>Rice Cooker</item>
+    </string-array>
+
+</resources>
