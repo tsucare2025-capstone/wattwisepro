@@ -15,15 +15,22 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Database connection configuration
 // Railway provides these environment variables
 const dbConfig = {
-  host: process.env.RAILWAY_PRIVATE_DOMAIN || process.env.MYSQL_HOST,
-  port: process.env.MYSQL_PORT || 3306,
-  user: process.env.MYSQLUSER || process.env.MYSQL_USER,
-  password: process.env.MYSQL_ROOT_PASSWORD || process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE || 'smart_energy_tracking',
+  host: process.env.RAILWAY_PRIVATE_DOMAIN || process.env.MYSQLHOST || process.env.MYSQL_HOST || 'localhost',
+  port: process.env.MYSQLPORT || process.env.MYSQL_PORT || 3306,
+  user: process.env.MYSQLUSER || process.env.MYSQL_USER || 'root',
+  password: process.env.MYSQL_ROOT_PASSWORD || process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || '',
+  database: process.env.MYSQL_DATABASE || process.env.MYSQLDATABASE || 'railway',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
 };
+
+// Log environment variables for debugging (remove sensitive data in production)
+console.log('Environment Variables Check:');
+console.log('RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'not set');
+console.log('MYSQLUSER:', process.env.MYSQLUSER || 'not set');
+console.log('MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'not set');
+console.log('MYSQL_ROOT_PASSWORD:', process.env.MYSQL_ROOT_PASSWORD ? '***set***' : 'not set');
 
 // Create connection pool
 let pool;
@@ -46,7 +53,16 @@ async function initDatabase() {
       host: dbConfig.host,
       port: dbConfig.port,
       user: dbConfig.user,
-      database: dbConfig.database
+      database: dbConfig.database,
+      password: dbConfig.password ? '***set***' : 'not set'
+    });
+    console.error('All MySQL-related env vars:', {
+      RAILWAY_PRIVATE_DOMAIN: process.env.RAILWAY_PRIVATE_DOMAIN || 'not set',
+      MYSQLHOST: process.env.MYSQLHOST || 'not set',
+      MYSQLUSER: process.env.MYSQLUSER || 'not set',
+      MYSQL_ROOT_PASSWORD: process.env.MYSQL_ROOT_PASSWORD ? '***set***' : 'not set',
+      MYSQL_DATABASE: process.env.MYSQL_DATABASE || 'not set',
+      MYSQLDATABASE: process.env.MYSQLDATABASE || 'not set'
     });
     // Retry connection after 5 seconds
     setTimeout(initDatabase, 5000);
