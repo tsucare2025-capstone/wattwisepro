@@ -7,10 +7,9 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    // TODO: Replace with your Railway backend URL
-    // For development, you can use: http://10.0.2.2:PORT (Android emulator)
-    // Or use ngrok for testing: https://your-ngrok-url.ngrok.io
-    private const val BASE_URL = "https://your-backend-url.railway.app/"
+    // Railway backend URL - Update this with your actual Railway domain
+    // For local development/testing, you can use: http://10.0.2.2:3000/ (Android emulator)
+    private const val BASE_URL = "https://wattwisepro-production.up.railway.app/"
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = HttpLoggingInterceptor.Level.BODY
