@@ -7,6 +7,15 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Debug: Log environment variables on startup
+console.log('🔍 Environment Variables Debug:');
+console.log('MYSQLHOST:', process.env.MYSQLHOST || 'NOT SET');
+console.log('MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
+console.log('MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? '***SET***' : 'NOT SET');
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE || 'NOT SET');
+console.log('MYSQLPORT:', process.env.MYSQLPORT || 'NOT SET');
+console.log('RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET');
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
