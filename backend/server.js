@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
+const bcrypt = require('bcryptjs');
 require('dotenv').config();
 
 const app = express();
@@ -14,27 +15,27 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database connection configuration
 // Railway provides these environment variables
-// Check for Railway MySQL service variables first, then fallback to standard names
+// Try TCP Proxy first (for external connections), then Private Domain (for internal)
 const dbConfig = {
-  host: process.env.MYSQLHOST || 
-        process.env.MYSQL_HOST || 
-        'mysql.railway.internal',
-  port: process.env.MYSQLPORT || 
-        process.env.RAILWAY_TCP_PROXY_PORT || 
+  host: process.env.RAILWAY_TCP_PROXY_DOMAIN || 
+        process.env.RAILWAY_PRIVATE_DOMAIN || 
+        process.env.MYSQL_HOST,
+  port: process.env.RAILWAY_TCP_PROXY_PORT || 
         process.env.MYSQL_PORT || 
         3306,
   user: process.env.MYSQLUSER || 
         process.env.MYSQL_USER || 
         'root',
-  password: process.env.MYSQLPASSWORD || 
-            process.env.MYSQL_ROOT_PASSWORD || 
+  password: process.env.MYSQL_ROOT_PASSWORD || 
             process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQLDATABASE || 
-             process.env.MYSQL_DATABASE || 
-             'railway',
+  database: process.env.MYSQL_DATABASE || 
+            'smart_energy_tracking',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
+  // Add connection timeout
+  connectTimeout: 10000,
+  acquireTimeout: 10000
 };
 
 // Create connection pool
@@ -43,6 +44,16 @@ let pool;
 // Initialize database connection
 async function initDatabase() {
   try {
+    // Log what we're trying to connect with
+    console.log('🔌 Attempting database connection...');
+    console.log('Database config:', {
+      host: dbConfig.host || 'NOT SET',
+      port: dbConfig.port || 'NOT SET',
+      user: dbConfig.user || 'NOT SET',
+      database: dbConfig.database || 'NOT SET',
+      password: dbConfig.password ? '***SET***' : 'NOT SET'
+    });
+    
     pool = mysql.createPool(dbConfig);
     
     // Test connection
@@ -54,7 +65,27 @@ async function initDatabase() {
     await createTables();
   } catch (error) {
     console.error('❌ Database connection failed:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Database config:', {
+      host: dbConfig.host || 'NOT SET',
+      port: dbConfig.port || 'NOT SET',
+      user: dbConfig.user || 'NOT SET',
+      database: dbConfig.database || 'NOT SET'
+    });
+    
+    // Log all environment variables related to MySQL
+    console.log('Environment variables check:');
+    console.log('- RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET');
+    console.log('- MYSQL_HOST:', process.env.MYSQL_HOST || 'NOT SET');
+    console.log('- MYSQL_PORT:', process.env.MYSQL_PORT || 'NOT SET');
+    console.log('- MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
+    console.log('- MYSQL_USER:', process.env.MYSQL_USER || 'NOT SET');
+    console.log('- MYSQL_ROOT_PASSWORD:', process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET');
+    console.log('- MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET');
+    console.log('- MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'NOT SET');
+    
     // Retry connection after 5 seconds
+    console.log('⏳ Retrying connection in 5 seconds...');
     setTimeout(initDatabase, 5000);
   }
 }
@@ -97,18 +128,94 @@ app.get('/', (req, res) => {
 // Health check
 app.get('/health', async (req, res) => {
   try {
+    if (!pool) {
+      return res.status(503).json({ 
+        status: 'unhealthy',
+        database: 'not_initialized',
+        message: 'Database pool not initialized',
+        timestamp: new Date().toISOString()
+      });
+    }
+
     const connection = await pool.getConnection();
+    
+    // Test query
+    const [rows] = await connection.execute('SELECT 1 as test');
     connection.release();
+    
     res.json({ 
       status: 'healthy',
       database: 'connected',
+      testQuery: rows[0],
       timestamp: new Date().toISOString()
     });
   } catch (error) {
     res.status(500).json({ 
       status: 'unhealthy',
       database: 'disconnected',
-      error: error.message
+      error: error.message,
+      errorCode: error.code,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Database diagnostic endpoint
+app.get('/api/db/diagnostic', async (req, res) => {
+  try {
+    const diagnostic = {
+      poolInitialized: !!pool,
+      databaseConfig: {
+        host: dbConfig.host || 'NOT SET',
+        port: dbConfig.port || 'NOT SET',
+        user: dbConfig.user || 'NOT SET',
+        database: dbConfig.database || 'NOT SET',
+        password: dbConfig.password ? '***SET***' : 'NOT SET'
+      },
+      environmentVariables: {
+        RAILWAY_TCP_PROXY_DOMAIN: process.env.RAILWAY_TCP_PROXY_DOMAIN || 'NOT SET',
+        RAILWAY_PRIVATE_DOMAIN: process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET',
+        MYSQL_HOST: process.env.MYSQL_HOST || 'NOT SET',
+        RAILWAY_TCP_PROXY_PORT: process.env.RAILWAY_TCP_PROXY_PORT || 'NOT SET',
+        MYSQL_PORT: process.env.MYSQL_PORT || 'NOT SET',
+        MYSQLUSER: process.env.MYSQLUSER || 'NOT SET',
+        MYSQL_USER: process.env.MYSQL_USER || 'NOT SET',
+        MYSQL_ROOT_PASSWORD: process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET',
+        MYSQL_PASSWORD: process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET',
+        MYSQL_DATABASE: process.env.MYSQL_DATABASE || 'NOT SET'
+      },
+      connectionTest: null,
+      error: null
+    };
+
+    if (pool) {
+      try {
+        const connection = await pool.getConnection();
+        const [rows] = await connection.execute('SELECT DATABASE() as current_db, USER() as current_user, NOW() as server_time');
+        diagnostic.connectionTest = {
+          success: true,
+          currentDatabase: rows[0].current_db,
+          currentUser: rows[0].current_user,
+          serverTime: rows[0].server_time
+        };
+        connection.release();
+      } catch (connError) {
+        diagnostic.connectionTest = {
+          success: false,
+          error: connError.message,
+          errorCode: connError.code
+        };
+        diagnostic.error = connError.message;
+      }
+    } else {
+      diagnostic.error = 'Database pool not initialized';
+    }
+
+    res.json(diagnostic);
+  } catch (error) {
+    res.status(500).json({
+      error: error.message,
+      stack: error.stack
     });
   }
 });
@@ -116,6 +223,14 @@ app.get('/health', async (req, res) => {
 // Sign up endpoint
 app.post('/api/auth/signup', async (req, res) => {
   try {
+    // Check if database pool is initialized
+    if (!pool) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not ready. Please try again in a moment.'
+      });
+    }
+
     const { name, email, password, address, householdType, city, subdivision, phoneNumber } = req.body;
 
     // Validate required fields
@@ -144,7 +259,7 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     // Validate household type
-    const validHouseholdTypes = ['Single', 'Family', 'Apartment', 'House'];
+    const validHouseholdTypes = ['Family', 'Apartment', 'Single', 'House'];
     if (!validHouseholdTypes.includes(householdType)) {
       return res.status(400).json({
         success: false,
@@ -165,8 +280,7 @@ app.post('/api/auth/signup', async (req, res) => {
       });
     }
 
-    // Hash password (simple hash for now, you should use bcrypt in production)
-    const bcrypt = require('bcryptjs');
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Insert new user
@@ -184,6 +298,7 @@ app.post('/api/auth/signup', async (req, res) => {
 
   } catch (error) {
     console.error('Sign up error:', error);
+    console.error('Error stack:', error.stack);
     
     // Handle MySQL duplicate entry error
     if (error.code === 'ER_DUP_ENTRY') {
@@ -196,7 +311,93 @@ app.post('/api/auth/signup', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Internal server error. Please try again later.',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
+// Login endpoint
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    // Check if database pool is initialized
+    if (!pool) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not ready. Please try again in a moment.'
+      });
+    }
+
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and password are required'
+      });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format'
+      });
+    }
+
+    // Find user by email
+    const [users] = await pool.execute(
+      'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE Email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    const user = users[0];
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.Password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Login successful - return user data (excluding password)
+    res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      user: {
+        userId: user.UserID,
+        name: user.Name,
+        email: user.Email,
+        address: user.Address,
+        householdType: user.HouseholdType,
+        city: user.City,
+        subdivision: user.Subdivision,
+        phoneNumber: user.PhoneNumber
+      }
+    });
+
+  } catch (error) {
+    console.error('Login error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error. Please try again later.',
+      error: error.message || 'Unknown error',
+      errorCode: error.code
     });
   }
 });
