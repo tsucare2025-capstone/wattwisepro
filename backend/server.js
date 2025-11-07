@@ -16,6 +16,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 // Database connection configuration
 // Railway provides these environment variables
 // Try TCP Proxy first (for external connections), then Private Domain (for internal)
+// Railway MySQL service provides: MYSQLUSER, MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, RAILWAY_PRIVATE_DOMAIN
 const dbConfig = {
   host: process.env.RAILWAY_TCP_PROXY_DOMAIN || 
         process.env.RAILWAY_PRIVATE_DOMAIN || 
@@ -38,12 +39,53 @@ const dbConfig = {
   acquireTimeout: 10000
 };
 
+// Validate required database configuration
+function validateDbConfig() {
+  const missing = [];
+  
+  if (!dbConfig.host) {
+    missing.push('Database host (RAILWAY_PRIVATE_DOMAIN or MYSQL_HOST)');
+  }
+  
+  if (!dbConfig.password) {
+    missing.push('Database password (MYSQL_ROOT_PASSWORD or MYSQL_PASSWORD)');
+  }
+  
+  if (!dbConfig.user) {
+    missing.push('Database user (MYSQLUSER or MYSQL_USER)');
+  }
+  
+  if (missing.length > 0) {
+    console.error('❌ Missing required database configuration:');
+    missing.forEach(item => console.error(`   - ${item}`));
+    console.error('\n📋 Please check Railway environment variables:');
+    console.error('   1. Go to Railway Dashboard → Your Project');
+    console.error('   2. Click on Backend Service → Variables tab');
+    console.error('   3. Ensure MySQL service is connected to backend service');
+    console.error('   4. Verify these variables are set:');
+    console.error('      - MYSQLUSER');
+    console.error('      - MYSQL_ROOT_PASSWORD');
+    console.error('      - MYSQL_DATABASE');
+    console.error('      - RAILWAY_PRIVATE_DOMAIN');
+    return false;
+  }
+  
+  return true;
+}
+
 // Create connection pool
 let pool;
 
 // Initialize database connection
 async function initDatabase() {
   try {
+    // Validate configuration first
+    if (!validateDbConfig()) {
+      console.error('⏳ Retrying connection in 10 seconds...');
+      setTimeout(initDatabase, 10000);
+      return;
+    }
+    
     // Log what we're trying to connect with
     console.log('🔌 Attempting database connection...');
     console.log('Database config:', {
@@ -70,13 +112,16 @@ async function initDatabase() {
       host: dbConfig.host || 'NOT SET',
       port: dbConfig.port || 'NOT SET',
       user: dbConfig.user || 'NOT SET',
-      database: dbConfig.database || 'NOT SET'
+      database: dbConfig.database || 'NOT SET',
+      password: dbConfig.password ? '***SET***' : 'NOT SET'
     });
     
     // Log all environment variables related to MySQL
-    console.log('Environment variables check:');
+    console.log('\n📋 Environment variables check:');
+    console.log('- RAILWAY_TCP_PROXY_DOMAIN:', process.env.RAILWAY_TCP_PROXY_DOMAIN || 'NOT SET');
     console.log('- RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET');
     console.log('- MYSQL_HOST:', process.env.MYSQL_HOST || 'NOT SET');
+    console.log('- RAILWAY_TCP_PROXY_PORT:', process.env.RAILWAY_TCP_PROXY_PORT || 'NOT SET');
     console.log('- MYSQL_PORT:', process.env.MYSQL_PORT || 'NOT SET');
     console.log('- MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
     console.log('- MYSQL_USER:', process.env.MYSQL_USER || 'NOT SET');
@@ -84,9 +129,9 @@ async function initDatabase() {
     console.log('- MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET');
     console.log('- MYSQL_DATABASE:', process.env.MYSQL_DATABASE || 'NOT SET');
     
-    // Retry connection after 5 seconds
-    console.log('⏳ Retrying connection in 5 seconds...');
-    setTimeout(initDatabase, 5000);
+    // Retry connection after 10 seconds
+    console.log('\n⏳ Retrying connection in 10 seconds...');
+    setTimeout(initDatabase, 10000);
   }
 }
 
@@ -299,6 +344,18 @@ app.post('/api/auth/signup', async (req, res) => {
   } catch (error) {
     console.error('Sign up error:', error);
     console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Handle database connection errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection failed. Please check Railway environment variables.',
+        error: 'Database connection error',
+        errorCode: error.code
+      });
+    }
     
     // Handle MySQL duplicate entry error
     if (error.code === 'ER_DUP_ENTRY') {
@@ -391,7 +448,19 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     console.error('Error stack:', error.stack);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
     console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
+    // Handle database connection errors
+    if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.code === 'ENOTFOUND') {
+      return res.status(503).json({
+        success: false,
+        message: 'Database connection failed. Please check Railway environment variables.',
+        error: 'Database connection error',
+        errorCode: error.code
+      });
+    }
     
     res.status(500).json({
       success: false,
