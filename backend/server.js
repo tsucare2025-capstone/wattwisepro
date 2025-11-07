@@ -146,6 +146,10 @@ async function initDatabase() {
 // Create tables if they don't exist
 async function createTables() {
   try {
+    // Check current database
+    const [dbInfo] = await pool.execute('SELECT DATABASE() as current_db');
+    console.log(`📊 Current database: ${dbInfo[0].current_db}`);
+    
     const createUserTable = `
       CREATE TABLE IF NOT EXISTS User (
         UserID INT AUTO_INCREMENT PRIMARY KEY,
@@ -164,8 +168,24 @@ async function createTables() {
     
     await pool.execute(createUserTable);
     console.log('✅ User table ready');
+    
+    // Verify table exists
+    const [tables] = await pool.execute(
+      "SHOW TABLES LIKE 'User'"
+    );
+    if (tables.length > 0) {
+      console.log('✅ Verified: User table exists');
+    } else {
+      console.log('⚠️ Warning: User table not found after creation');
+    }
+    
+    // Check table structure
+    const [columns] = await pool.execute('DESCRIBE User');
+    console.log(`📋 User table has ${columns.length} columns`);
   } catch (error) {
     console.error('❌ Error creating tables:', error.message);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error stack:', error.stack);
   }
 }
 
@@ -361,34 +381,97 @@ app.post('/api/auth/signup', async (req, res) => {
     // Insert new user
     // Try 'User' table first, then 'user' if it doesn't exist
     let result;
+    let tableUsed = '';
+    let insertSuccessful = false;
+    
     try {
+      console.log(`📝 Attempting to insert user into 'User' table...`);
       [result] = await pool.execute(
         `INSERT INTO User (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
       );
-      console.log(`✅ User created in 'User' table with ID: ${result.insertId}`);
+      
+      // Verify insert was successful
+      if (result && result.affectedRows > 0 && result.insertId) {
+        tableUsed = 'User';
+        insertSuccessful = true;
+        console.log(`✅ User created in 'User' table with ID: ${result.insertId}`);
+        console.log(`📊 Affected rows: ${result.affectedRows}`);
+      } else {
+        console.log(`⚠️ Insert returned but no rows affected or no insertId`);
+        throw new Error('Insert failed - no rows affected');
+      }
     } catch (tableError) {
+      console.log(`⚠️ Error inserting into 'User' table: ${tableError.message}`);
+      console.log(`⚠️ Error code: ${tableError.code}`);
+      
       // If 'User' table doesn't exist, try 'user' (lowercase)
       if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
         console.log('⚠️ User table not found, trying lowercase "user" table...');
-        [result] = await pool.execute(
-          `INSERT INTO user (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
-        );
-        console.log(`✅ User created in 'user' table with ID: ${result.insertId}`);
+        try {
+          [result] = await pool.execute(
+            `INSERT INTO user (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
+          );
+          
+          // Verify insert was successful
+          if (result && result.affectedRows > 0 && result.insertId) {
+            tableUsed = 'user';
+            insertSuccessful = true;
+            console.log(`✅ User created in 'user' table with ID: ${result.insertId}`);
+            console.log(`📊 Affected rows: ${result.affectedRows}`);
+          } else {
+            console.log(`⚠️ Insert into 'user' table returned but no rows affected`);
+            throw new Error('Insert failed - no rows affected');
+          }
+        } catch (lowercaseError) {
+          console.error(`❌ Error inserting into 'user' table: ${lowercaseError.message}`);
+          throw lowercaseError;
+        }
       } else {
         throw tableError;
       }
     }
 
+    // Verify user was actually created by querying the database
+    if (insertSuccessful && result.insertId) {
+      try {
+        console.log(`🔍 Verifying user was created in '${tableUsed}' table...`);
+        const [verifyUsers] = await pool.execute(
+          `SELECT UserID, Name, Email FROM ${tableUsed} WHERE UserID = ?`,
+          [result.insertId]
+        );
+        
+        if (verifyUsers.length > 0) {
+          console.log(`✅ Verification successful: User found in database`);
+          console.log(`   UserID: ${verifyUsers[0].UserID}`);
+          console.log(`   Name: ${verifyUsers[0].Name}`);
+          console.log(`   Email: ${verifyUsers[0].Email}`);
+        } else {
+          console.log(`❌ Verification failed: User not found in database after insert!`);
+          console.log(`   Expected UserID: ${result.insertId}`);
+          console.log(`   Table used: ${tableUsed}`);
+        }
+      } catch (verifyError) {
+        console.error(`⚠️ Error verifying user creation: ${verifyError.message}`);
+      }
+    }
+
+    if (!insertSuccessful) {
+      throw new Error('User insert failed - no rows were affected');
+    }
+
     console.log(`✅ Signup successful for: ${name} (${email})`);
+    console.log(`   UserID: ${result.insertId}`);
+    console.log(`   Table: ${tableUsed}`);
 
     res.status(201).json({
       success: true,
       message: 'Account created successfully',
-      userId: result.insertId
+      userId: result.insertId,
+      table: tableUsed
     });
 
   } catch (error) {
