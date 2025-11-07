@@ -324,12 +324,30 @@ app.post('/api/auth/signup', async (req, res) => {
     }
 
     // Check if email already exists
-    const [existingUsers] = await pool.execute(
-      'SELECT UserID FROM User WHERE Email = ?',
-      [email]
-    );
+    let existingUsers;
+    try {
+      [existingUsers] = await pool.execute(
+        'SELECT UserID FROM User WHERE Email = ?',
+        [email]
+      );
+    } catch (tableError) {
+      // If 'User' table doesn't exist, try 'user' (lowercase)
+      if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
+        console.log('⚠️ User table not found, trying lowercase "user" table...');
+        [existingUsers] = await pool.execute(
+          'SELECT UserID FROM user WHERE Email = ?',
+          [email]
+        );
+      } else {
+        throw tableError;
+      }
+    }
+
+    console.log(`🔍 Signup attempt for email: ${email}`);
+    console.log(`📊 Existing users with this email: ${existingUsers.length}`);
 
     if (existingUsers.length > 0) {
+      console.log(`❌ Email already registered: ${email}`);
       return res.status(400).json({
         success: false,
         message: 'Email already registered'
@@ -338,13 +356,34 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(`🔐 Password hashed successfully`);
 
     // Insert new user
-    const [result] = await pool.execute(
-      `INSERT INTO User (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
-    );
+    // Try 'User' table first, then 'user' if it doesn't exist
+    let result;
+    try {
+      [result] = await pool.execute(
+        `INSERT INTO User (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
+      );
+      console.log(`✅ User created in 'User' table with ID: ${result.insertId}`);
+    } catch (tableError) {
+      // If 'User' table doesn't exist, try 'user' (lowercase)
+      if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
+        console.log('⚠️ User table not found, trying lowercase "user" table...');
+        [result] = await pool.execute(
+          `INSERT INTO user (Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber) 
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+          [name, email, hashedPassword, address, householdType, city, subdivision, phoneNumber]
+        );
+        console.log(`✅ User created in 'user' table with ID: ${result.insertId}`);
+      } else {
+        throw tableError;
+      }
+    }
+
+    console.log(`✅ Signup successful for: ${name} (${email})`);
 
     res.status(201).json({
       success: true,
@@ -416,12 +455,31 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // Find user by email
-    const [users] = await pool.execute(
-      'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE Email = ?',
-      [email]
-    );
+    // Try both 'User' and 'user' table names for case sensitivity
+    let users;
+    try {
+      [users] = await pool.execute(
+        'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE Email = ?',
+        [email]
+      );
+    } catch (tableError) {
+      // If 'User' table doesn't exist, try 'user' (lowercase)
+      if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
+        console.log('⚠️ User table not found, trying lowercase "user" table...');
+        [users] = await pool.execute(
+          'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM user WHERE Email = ?',
+          [email]
+        );
+      } else {
+        throw tableError;
+      }
+    }
+
+    console.log(`🔍 Login attempt for email: ${email}`);
+    console.log(`📊 Found ${users.length} user(s) with this email`);
 
     if (users.length === 0) {
+      console.log(`❌ No user found with email: ${email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
@@ -429,16 +487,21 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     const user = users[0];
+    console.log(`✅ User found: ${user.Name} (ID: ${user.UserID})`);
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.Password);
+    console.log(`🔐 Password verification: ${isPasswordValid ? 'VALID' : 'INVALID'}`);
 
     if (!isPasswordValid) {
+      console.log(`❌ Password mismatch for user: ${email}`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
       });
     }
+
+    console.log(`✅ Login successful for user: ${email}`);
 
     // Login successful - return user data (excluding password)
     res.status(200).json({
