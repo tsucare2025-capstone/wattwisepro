@@ -456,27 +456,47 @@ app.post('/api/auth/login', async (req, res) => {
 
     // Find user by email
     // Try both 'User' and 'user' table names for case sensitivity
-    let users;
+    let users = [];
+    let tableUsed = '';
+    
+    console.log(`🔍 Login attempt for email: ${email}`);
+    
+    // Try 'User' table first (uppercase)
     try {
       [users] = await pool.execute(
         'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE Email = ?',
         [email]
       );
+      if (users.length > 0) {
+        tableUsed = 'User';
+        console.log(`✅ Found user in 'User' table`);
+      }
     } catch (tableError) {
       // If 'User' table doesn't exist, try 'user' (lowercase)
       if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
         console.log('⚠️ User table not found, trying lowercase "user" table...');
+      } else {
+        console.log(`⚠️ Error querying 'User' table: ${tableError.message}`);
+      }
+    }
+    
+    // If not found in 'User' table, try 'user' table (lowercase)
+    if (users.length === 0) {
+      try {
         [users] = await pool.execute(
           'SELECT UserID, Name, Email, Password, Address, HouseholdType, City, Subdivision, PhoneNumber FROM user WHERE Email = ?',
           [email]
         );
-      } else {
-        throw tableError;
+        if (users.length > 0) {
+          tableUsed = 'user';
+          console.log(`✅ Found user in 'user' table`);
+        }
+      } catch (tableError) {
+        console.log(`⚠️ Error querying 'user' table: ${tableError.message}`);
       }
     }
 
-    console.log(`🔍 Login attempt for email: ${email}`);
-    console.log(`📊 Found ${users.length} user(s) with this email`);
+    console.log(`📊 Found ${users.length} user(s) with this email (table: ${tableUsed || 'none'})`);
 
     if (users.length === 0) {
       console.log(`❌ No user found with email: ${email}`);
@@ -488,13 +508,27 @@ app.post('/api/auth/login', async (req, res) => {
 
     const user = users[0];
     console.log(`✅ User found: ${user.Name} (ID: ${user.UserID})`);
+    console.log(`📧 User email from DB: ${user.Email}`);
+    console.log(`🔐 Stored password hash length: ${user.Password ? user.Password.length : 0}`);
+    console.log(`🔐 Stored password hash (first 20 chars): ${user.Password ? user.Password.substring(0, 20) + '...' : 'NULL'}`);
 
     // Verify password
+    if (!user.Password) {
+      console.log(`❌ User password is NULL in database`);
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
     const isPasswordValid = await bcrypt.compare(password, user.Password);
     console.log(`🔐 Password verification: ${isPasswordValid ? 'VALID' : 'INVALID'}`);
+    console.log(`🔐 Input password length: ${password.length}`);
 
     if (!isPasswordValid) {
       console.log(`❌ Password mismatch for user: ${email}`);
+      console.log(`❌ Input password: "${password}"`);
+      console.log(`❌ Stored hash: ${user.Password.substring(0, 30)}...`);
       return res.status(401).json({
         success: false,
         message: 'Invalid email or password'
