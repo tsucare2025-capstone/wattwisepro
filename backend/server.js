@@ -500,9 +500,23 @@ app.post('/api/auth/login', async (req, res) => {
 
     if (users.length === 0) {
       console.log(`❌ No user found with email: ${email}`);
+      // Try case-insensitive search as fallback
+      try {
+        const [caseInsensitiveUsers] = await pool.execute(
+          'SELECT UserID, Name, Email FROM User WHERE LOWER(Email) = LOWER(?)',
+          [email]
+        );
+        if (caseInsensitiveUsers.length > 0) {
+          console.log(`⚠️ Found user with different case: ${caseInsensitiveUsers[0].Email}`);
+        }
+      } catch (e) {
+        // Ignore errors in fallback search
+      }
+      
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
+        debug: 'No user found with this email address'
       });
     }
 
@@ -521,8 +535,36 @@ app.post('/api/auth/login', async (req, res) => {
       });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.Password);
-    console.log(`🔐 Password verification: ${isPasswordValid ? 'VALID' : 'INVALID'}`);
+    // Check if password is hashed (bcrypt hashes start with $2a$, $2b$, or $2y$)
+    const isPasswordHashed = user.Password && (
+      user.Password.startsWith('$2a$') || 
+      user.Password.startsWith('$2b$') || 
+      user.Password.startsWith('$2y$')
+    );
+    
+    console.log(`🔐 Password is hashed: ${isPasswordHashed}`);
+    console.log(`🔐 Password hash starts with: ${user.Password ? user.Password.substring(0, 4) : 'NULL'}`);
+    
+    let isPasswordValid = false;
+    
+    if (isPasswordHashed) {
+      // Password is hashed with bcrypt, use bcrypt.compare
+      isPasswordValid = await bcrypt.compare(password, user.Password);
+      console.log(`🔐 Password verification (bcrypt): ${isPasswordValid ? 'VALID' : 'INVALID'}`);
+    } else {
+      // Password is not hashed (plain text or different format)
+      // This should not happen if user was created through signup endpoint
+      console.log(`⚠️ WARNING: Password is not hashed with bcrypt!`);
+      console.log(`⚠️ This user was likely created manually or with a different method.`);
+      console.log(`⚠️ Password comparison skipped - password needs to be re-hashed.`);
+      
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password',
+        debug: 'Password in database is not properly hashed. Please create a new account through signup or reset your password.'
+      });
+    }
+    
     console.log(`🔐 Input password length: ${password.length}`);
 
     if (!isPasswordValid) {
@@ -531,7 +573,8 @@ app.post('/api/auth/login', async (req, res) => {
       console.log(`❌ Stored hash: ${user.Password.substring(0, 30)}...`);
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password'
+        message: 'Invalid email or password',
+        debug: 'Password does not match. Please check your password or create a new account.'
       });
     }
 
