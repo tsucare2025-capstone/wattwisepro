@@ -14,22 +14,26 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Database connection configuration
-// Railway provides these environment variables
-// Try TCP Proxy first (for external connections), then Private Domain (for internal)
-// Railway MySQL service provides: MYSQLUSER, MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, RAILWAY_PRIVATE_DOMAIN
+// Railway provides these environment variables with different naming conventions
+// Railway MySQL service provides: MYSQLUSER, MYSQLPASSWORD, MYSQLDATABASE, MYSQLHOST, MYSQLPORT
+// Also supports: MYSQL_ROOT_PASSWORD, MYSQL_DATABASE, RAILWAY_PRIVATE_DOMAIN (alternative names)
 const dbConfig = {
-  host: process.env.RAILWAY_TCP_PROXY_DOMAIN || 
+  host: process.env.MYSQLHOST || 
+        process.env.RAILWAY_TCP_PROXY_DOMAIN || 
         process.env.RAILWAY_PRIVATE_DOMAIN || 
         process.env.MYSQL_HOST,
-  port: process.env.RAILWAY_TCP_PROXY_PORT || 
+  port: process.env.MYSQLPORT || 
+        process.env.RAILWAY_TCP_PROXY_PORT || 
         process.env.MYSQL_PORT || 
         3306,
   user: process.env.MYSQLUSER || 
         process.env.MYSQL_USER || 
         'root',
-  password: process.env.MYSQL_ROOT_PASSWORD || 
+  password: process.env.MYSQLPASSWORD || 
+            process.env.MYSQL_ROOT_PASSWORD || 
             process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE || 
+  database: process.env.MYSQLDATABASE || 
+            process.env.MYSQL_DATABASE || 
             'smart_energy_tracking',
   waitForConnections: true,
   connectionLimit: 10,
@@ -63,10 +67,11 @@ function validateDbConfig() {
     console.error('   2. Click on Backend Service → Variables tab');
     console.error('   3. Ensure MySQL service is connected to backend service');
     console.error('   4. Verify these variables are set:');
+    console.error('      - MYSQLHOST (or RAILWAY_PRIVATE_DOMAIN)');
+    console.error('      - MYSQLPORT (or RAILWAY_TCP_PROXY_PORT)');
     console.error('      - MYSQLUSER');
-    console.error('      - MYSQL_ROOT_PASSWORD');
-    console.error('      - MYSQL_DATABASE');
-    console.error('      - RAILWAY_PRIVATE_DOMAIN');
+    console.error('      - MYSQLPASSWORD (or MYSQL_ROOT_PASSWORD)');
+    console.error('      - MYSQLDATABASE (or MYSQL_DATABASE)');
     return false;
   }
   
@@ -118,12 +123,15 @@ async function initDatabase() {
     
     // Log all environment variables related to MySQL
     console.log('\n📋 Environment variables check:');
+    console.log('- MYSQLHOST:', process.env.MYSQLHOST || 'NOT SET');
+    console.log('- MYSQLPORT:', process.env.MYSQLPORT || 'NOT SET');
+    console.log('- MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
+    console.log('- MYSQLPASSWORD:', process.env.MYSQLPASSWORD ? 'SET' : 'NOT SET');
+    console.log('- MYSQLDATABASE:', process.env.MYSQLDATABASE || 'NOT SET');
     console.log('- RAILWAY_TCP_PROXY_DOMAIN:', process.env.RAILWAY_TCP_PROXY_DOMAIN || 'NOT SET');
     console.log('- RAILWAY_PRIVATE_DOMAIN:', process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET');
     console.log('- MYSQL_HOST:', process.env.MYSQL_HOST || 'NOT SET');
-    console.log('- RAILWAY_TCP_PROXY_PORT:', process.env.RAILWAY_TCP_PROXY_PORT || 'NOT SET');
     console.log('- MYSQL_PORT:', process.env.MYSQL_PORT || 'NOT SET');
-    console.log('- MYSQLUSER:', process.env.MYSQLUSER || 'NOT SET');
     console.log('- MYSQL_USER:', process.env.MYSQL_USER || 'NOT SET');
     console.log('- MYSQL_ROOT_PASSWORD:', process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET');
     console.log('- MYSQL_PASSWORD:', process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET');
@@ -218,12 +226,15 @@ app.get('/api/db/diagnostic', async (req, res) => {
         password: dbConfig.password ? '***SET***' : 'NOT SET'
       },
       environmentVariables: {
+        MYSQLHOST: process.env.MYSQLHOST || 'NOT SET',
+        MYSQLPORT: process.env.MYSQLPORT || 'NOT SET',
+        MYSQLUSER: process.env.MYSQLUSER || 'NOT SET',
+        MYSQLPASSWORD: process.env.MYSQLPASSWORD ? 'SET' : 'NOT SET',
+        MYSQLDATABASE: process.env.MYSQLDATABASE || 'NOT SET',
         RAILWAY_TCP_PROXY_DOMAIN: process.env.RAILWAY_TCP_PROXY_DOMAIN || 'NOT SET',
         RAILWAY_PRIVATE_DOMAIN: process.env.RAILWAY_PRIVATE_DOMAIN || 'NOT SET',
         MYSQL_HOST: process.env.MYSQL_HOST || 'NOT SET',
-        RAILWAY_TCP_PROXY_PORT: process.env.RAILWAY_TCP_PROXY_PORT || 'NOT SET',
         MYSQL_PORT: process.env.MYSQL_PORT || 'NOT SET',
-        MYSQLUSER: process.env.MYSQLUSER || 'NOT SET',
         MYSQL_USER: process.env.MYSQL_USER || 'NOT SET',
         MYSQL_ROOT_PASSWORD: process.env.MYSQL_ROOT_PASSWORD ? 'SET' : 'NOT SET',
         MYSQL_PASSWORD: process.env.MYSQL_PASSWORD ? 'SET' : 'NOT SET',
