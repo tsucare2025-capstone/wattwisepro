@@ -3,7 +3,6 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
-const rawUsageRoutes = require('./routes/rawUsageRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -710,12 +709,4 @@ app.post('/api/auth/login', async (req, res) => {
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
   await initDatabase();
-  
-  if (pool) {
-    const rawUsageRouter = rawUsageRoutes(pool);
-    app.use('/api', rawUsageRouter);
-    console.log('✅ RawUsage route added: POST /api/raw-usage');
-  }
 });
-
-
