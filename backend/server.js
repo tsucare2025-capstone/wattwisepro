@@ -3,7 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
-const rawUsageRoutes = require('./routes/rawUsageRoutes');
+const rawUsageRoutes = require('./rawUsageRoutes');
 require('dotenv').config();
 
 const app = express();
