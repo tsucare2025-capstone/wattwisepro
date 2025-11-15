@@ -1,4 +1,5 @@
 const express = require('express');
+const { updateDailyUsage } = require('./aggregationService');
 
 module.exports = (pool) => {
   const router = express.Router();
@@ -65,6 +66,15 @@ module.exports = (pool) => {
             energy: accumulatedEnergy
           }
         });
+
+        // Update dailyUsage in background (non-blocking)
+        setImmediate(async () => {
+          try {
+            await updateDailyUsage(null, pool);
+          } catch (error) {
+            console.error('Background dailyUsage update error:', error.message);
+          }
+        });
       } else {
         // No row exists for today - INSERT new row
         await pool.execute(
@@ -76,6 +86,15 @@ module.exports = (pool) => {
           success: true,
           message: "Data saved successfully",
           action: "inserted"
+        });
+
+        // Update dailyUsage in background (non-blocking)
+        setImmediate(async () => {
+          try {
+            await updateDailyUsage(null, pool);
+          } catch (error) {
+            console.error('Background dailyUsage update error:', error.message);
+          }
         });
       }
     } catch (error) {
