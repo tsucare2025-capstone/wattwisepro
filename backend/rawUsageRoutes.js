@@ -1,55 +1,42 @@
 const express = require('express');
-const router = express.Router();
-const { v4: uuidv4 } = require('uuid'); // to generate rawUsageID
 
 module.exports = (pool) => {
+  const router = express.Router();
+
+  // ESP32 → RAW USAGE INSERT ROUTE
   router.post('/api/raw-usage', async (req, res) => {
+    const { voltage, current, power, energy } = req.body;
+
+    // Validate incoming data (only the 4 required fields)
+    if (
+      voltage === undefined ||
+      current === undefined ||
+      power === undefined ||
+      energy === undefined
+    ) {
+      return res.status(400).json({ 
+        success: false,
+        error: "Missing required parameters: voltage, current, power, energy" 
+      });
+    }
+
     try {
-      const {
-        voltage,
-        current,
-        power,
-        energy,
-        meterID,
-        DeviceID
-      } = req.body;
+      // Insert to the database using correct column names with backticks
+      // Note: timestamp is automatically set by MySQL (NOT NULL, so we use NOW())
+      await pool.execute(
+        "INSERT INTO rawUsage (timestamp, `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`) VALUES (NOW(), ?, ?, ?, ?)",
+        [voltage, current, power, energy]
+      );
 
-      if (!voltage || !current || !power || !energy || !meterID || !DeviceID) {
-        return res.status(400).json({
-          success: false,
-          message: 'Missing required fields'
-        });
-      }
-
-      const rawUsageID = uuidv4();
-
-      const sql = `
-        INSERT INTO rawUsage (
-          rawUsageID, timestamp, \`voltage(V)\`, \`current(A)\`, \`power(W)\`, \`energy(kWh)\`, meterID, DeviceID
-        ) VALUES (?, NOW(), ?, ?, ?, ?, ?, ?)
-      `;
-
-      await pool.execute(sql, [
-        rawUsageID,
-        voltage,
-        current,
-        power,
-        energy,
-        meterID,
-        DeviceID
-      ]);
-
-      res.status(201).json({
+      res.status(201).json({ 
         success: true,
-        message: 'Raw usage data inserted successfully',
-        id: rawUsageID
+        message: "Data saved successfully" 
       });
     } catch (error) {
-      console.error('Error inserting raw usage data:', error);
-      res.status(500).json({
+      console.error("Insert Error:", error.message);
+      res.status(500).json({ 
         success: false,
-        message: 'Internal server error',
-        error: error.message
+        error: error.message 
       });
     }
   });
