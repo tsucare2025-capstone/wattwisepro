@@ -3,7 +3,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
+const cron = require('node-cron');
 const rawUsageRoutes = require('./rawUsageRoutes');
+const { processEndOfDayBatch } = require('./aggregationService');
 require('dotenv').config();
 
 const app = express();
@@ -810,5 +812,16 @@ app.listen(PORT, async () => {
     const rawUsageRouter = rawUsageRoutes(pool);
     app.use(rawUsageRouter);
     console.log('✅ RawUsage route added: POST /api/raw-usage');
+
+    // Schedule end-of-day batch processing (runs at 00:01 every day)
+    // This updates weeklyUsage and monthlyUsage tables
+    cron.schedule('1 0 * * *', async () => {
+      console.log('⏰ End-of-day batch job triggered');
+      await processEndOfDayBatch(pool);
+    }, {
+      scheduled: true,
+      timezone: "UTC"
+    });
+    console.log('✅ End-of-day batch job scheduled (runs daily at 00:01 UTC)');
   }
 });
