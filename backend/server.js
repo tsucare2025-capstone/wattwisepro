@@ -3,7 +3,9 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql2/promise');
 const bcrypt = require('bcryptjs');
+const cron = require('node-cron');
 const rawUsageRoutes = require('./rawUsageRoutes');
+const { processEndOfDayBatch } = require('./aggregationService');
 require('dotenv').config();
 
 const app = express();
@@ -706,6 +708,101 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Get user profile endpoint
+app.get('/api/user/:userId', async (req, res) => {
+  try {
+    // Check if database pool is initialized
+    if (!pool) {
+      return res.status(503).json({
+        success: false,
+        message: 'Database is not ready. Please try again in a moment.'
+      });
+    }
+
+    const userId = parseInt(req.params.userId);
+
+    // Validate userId
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid user ID'
+      });
+    }
+
+    console.log(`🔍 Fetching profile for user ID: ${userId}`);
+
+    // Try 'User' table first (uppercase)
+    let users = [];
+    try {
+      [users] = await pool.execute(
+        'SELECT UserID, Name, Email, Address, HouseholdType, City, Subdivision, PhoneNumber FROM User WHERE UserID = ?',
+        [userId]
+      );
+      if (users.length > 0) {
+        console.log(`✅ Found user in 'User' table`);
+      }
+    } catch (tableError) {
+      // If 'User' table doesn't exist, try 'user' (lowercase)
+      if (tableError.code === 'ER_NO_SUCH_TABLE' || tableError.message.includes("doesn't exist")) {
+        console.log('⚠️ User table not found, trying lowercase "user" table...');
+      } else {
+        console.error(`❌ Error querying 'User' table: ${tableError.message}`);
+      }
+    }
+
+    // If not found in 'User' table, try 'user' table (lowercase)
+    if (users.length === 0) {
+      try {
+        [users] = await pool.execute(
+          'SELECT UserID, Name, Email, Address, HouseholdType, City, Subdivision, PhoneNumber FROM user WHERE UserID = ?',
+          [userId]
+        );
+        if (users.length > 0) {
+          console.log(`✅ Found user in 'user' table`);
+        }
+      } catch (tableError) {
+        console.error(`❌ Error querying 'user' table: ${tableError.message}`);
+      }
+    }
+
+    if (users.length === 0) {
+      console.log(`❌ No user found with ID: ${userId}`);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const user = users[0];
+    console.log(`✅ User profile retrieved: ${user.Name} (ID: ${user.UserID})`);
+
+    // Return user profile (excluding password)
+    return res.status(200).json({
+      success: true,
+      message: 'User profile retrieved successfully',
+      data: {
+        UserID: user.UserID,
+        Name: user.Name || null,
+        Email: user.Email || null,
+        Address: user.Address || null,
+        HouseholdType: user.HouseholdType || null,
+        City: user.City || null,
+        Subdivision: user.Subdivision || null,
+        PhoneNumber: user.PhoneNumber || null
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching user profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error. Please try again later.',
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
@@ -715,5 +812,16 @@ app.listen(PORT, async () => {
     const rawUsageRouter = rawUsageRoutes(pool);
     app.use(rawUsageRouter);
     console.log('✅ RawUsage route added: POST /api/raw-usage');
+
+    // Schedule end-of-day batch processing (runs at 00:01 every day)
+    // This updates weeklyUsage and monthlyUsage tables
+    cron.schedule('1 0 * * *', async () => {
+      console.log('⏰ End-of-day batch job triggered');
+      await processEndOfDayBatch(pool);
+    }, {
+      scheduled: true,
+      timezone: "UTC"
+    });
+    console.log('✅ End-of-day batch job scheduled (runs daily at 00:01 UTC)');
   }
 });
