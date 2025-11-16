@@ -1087,6 +1087,200 @@ app.get('/api/monthly-usage/year', async (req, res) => {
   }
 });
 
+// Get daily usage for a specific date
+app.get('/api/daily-usage/date/:date', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    const dateStr = req.params.date; // Format: YYYY-MM-DD
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format. Use YYYY-MM-DD'
+      });
+    }
+
+    // Query dailyUsage table for the specific date
+    const [rows] = await pool.execute(
+      "SELECT id, date, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM dailyUsage WHERE date = ?",
+      [dateStr]
+    );
+
+    if (rows.length === 0) {
+      // No data for this date
+      return res.status(200).json({
+        success: true,
+        message: 'No usage data found for this date',
+        data: {
+          date: dateStr,
+          total_energy: 0,
+          total_power: 0,
+          peak_power: 0,
+          average_power: 0
+        }
+      });
+    }
+
+    const row = rows[0];
+    res.status(200).json({
+      success: true,
+      message: 'Daily usage data retrieved successfully',
+      data: {
+        id: row.id,
+        date: dateStr,
+        total_energy: parseFloat(row.total_energy) || 0,
+        total_power: parseFloat(row.total_power) || 0,
+        peak_power: parseFloat(row.peak_power) || 0,
+        average_power: parseFloat(row.average_power) || 0,
+        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching daily usage for date:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
+// Get current month's usage from monthlyUsage table
+app.get('/api/monthly-usage/current', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  // Helper function to get month name
+  function getMonthName(month) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[month - 1] || '';
+  }
+
+  try {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1; // JavaScript months are 0-indexed
+
+    // Query monthlyUsage table for current month
+    const [rows] = await pool.execute(
+      "SELECT id, month, year, month_name, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM monthlyUsage WHERE year = ? AND month = ?",
+      [currentYear, currentMonth]
+    );
+
+    if (rows.length === 0) {
+      // No data for current month
+      return res.status(200).json({
+        success: true,
+        message: 'No usage data found for current month',
+        data: {
+          month: currentMonth,
+          year: currentYear,
+          month_name: getMonthName(currentMonth),
+          total_energy: 0,
+          total_power: 0,
+          peak_power: 0,
+          average_power: 0
+        }
+      });
+    }
+
+    const row = rows[0];
+    res.status(200).json({
+      success: true,
+      message: 'Current month usage data retrieved successfully',
+      data: {
+        id: row.id,
+        month: row.month,
+        year: row.year,
+        month_name: row.month_name || getMonthName(row.month),
+        total_energy: parseFloat(row.total_energy) || 0,
+        total_power: parseFloat(row.total_power) || 0,
+        peak_power: parseFloat(row.peak_power) || 0,
+        average_power: parseFloat(row.average_power) || 0,
+        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching current month usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
+// Get current year's total usage (sum of all months in the year)
+app.get('/api/monthly-usage/year-total', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    // Query monthlyUsage table for all months in current year
+    const [rows] = await pool.execute(
+      "SELECT total_energy, total_power, peak_power, average_power FROM monthlyUsage WHERE year = ?",
+      [currentYear]
+    );
+
+    // Sum all months' values
+    let totalEnergy = 0;
+    let totalPower = 0;
+    let peakPower = 0;
+    let avgPowerSum = 0;
+    const monthCount = rows.length;
+
+    rows.forEach(row => {
+      totalEnergy += parseFloat(row.total_energy) || 0;
+      totalPower += parseFloat(row.total_power) || 0;
+      peakPower = Math.max(peakPower, parseFloat(row.peak_power) || 0);
+      avgPowerSum += parseFloat(row.average_power) || 0;
+    });
+
+    const averagePower = monthCount > 0 ? avgPowerSum / monthCount : 0;
+
+    res.status(200).json({
+      success: true,
+      message: 'Year total usage data retrieved successfully',
+      data: {
+        year: currentYear,
+        total_energy: totalEnergy,
+        total_power: totalPower,
+        peak_power: peakPower,
+        average_power: averagePower,
+        months_count: monthCount
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching year total usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
