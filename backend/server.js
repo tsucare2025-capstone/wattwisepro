@@ -900,6 +900,193 @@ app.get('/api/daily-usage/week', async (req, res) => {
   }
 });
 
+// Get weekly usage for last 4 weeks
+app.get('/api/weekly-usage/recent', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    // Calculate date range for last 4 weeks
+    const today = new Date();
+    const fourWeeksAgo = new Date(today);
+    fourWeeksAgo.setDate(today.getDate() - 28); // 4 weeks = 28 days
+    fourWeeksAgo.setHours(0, 0, 0, 0);
+
+    const todayStr = today.toISOString().split('T')[0];
+    const fourWeeksAgoStr = fourWeeksAgo.toISOString().split('T')[0];
+
+    // Query weeklyUsage table for the last 4 weeks
+    const [rows] = await pool.execute(
+      "SELECT id, week_start_date, week_end_date, week_number, year, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM weeklyUsage WHERE week_start_date >= ? AND week_start_date <= ? ORDER BY week_start_date DESC LIMIT 4",
+      [fourWeeksAgoStr, todayStr]
+    );
+
+    // Create a map of week_start_date -> usage for easy lookup
+    const usageMap = new Map();
+    rows.forEach(row => {
+      let weekStartStr;
+      if (row.week_start_date instanceof Date) {
+        weekStartStr = row.week_start_date.toISOString().split('T')[0];
+      } else {
+        weekStartStr = row.week_start_date;
+      }
+      
+      let weekEndStr;
+      if (row.week_end_date instanceof Date) {
+        weekEndStr = row.week_end_date.toISOString().split('T')[0];
+      } else {
+        weekEndStr = row.week_end_date;
+      }
+
+      usageMap.set(weekStartStr, {
+        id: row.id,
+        week_start_date: weekStartStr,
+        week_end_date: weekEndStr,
+        week_number: row.week_number,
+        year: row.year,
+        total_energy: parseFloat(row.total_energy) || 0,
+        total_power: parseFloat(row.total_power) || 0,
+        peak_power: parseFloat(row.peak_power) || 0,
+        average_power: parseFloat(row.average_power) || 0,
+        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+      });
+    });
+
+    // Generate array for last 4 weeks (most recent first)
+    const weekData = [];
+    for (let i = 3; i >= 0; i--) {
+      const weekStart = new Date(today);
+      weekStart.setDate(today.getDate() - (i * 7)); // Go back i weeks
+      const dayOfWeek = weekStart.getDay(); // 0 = Sunday
+      weekStart.setDate(weekStart.getDate() - dayOfWeek); // Go back to Sunday
+      weekStart.setHours(0, 0, 0, 0);
+      
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6); // Add 6 days to get Saturday
+      
+      const weekStartStr = weekStart.toISOString().split('T')[0];
+      
+      if (usageMap.has(weekStartStr)) {
+        weekData.push(usageMap.get(weekStartStr));
+      } else {
+        // Return empty data for weeks without records
+        weekData.push({
+          id: null,
+          week_start_date: weekStartStr,
+          week_end_date: weekEnd.toISOString().split('T')[0],
+          week_number: 0,
+          year: weekStart.getFullYear(),
+          total_energy: 0,
+          total_power: 0,
+          peak_power: 0,
+          average_power: 0,
+          created_at: null,
+          updated_at: null
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Weekly usage data retrieved successfully',
+      data: weekData
+    });
+  } catch (error) {
+    console.error('Error fetching weekly usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
+// Get monthly usage for current year (12 months)
+app.get('/api/monthly-usage/year', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+
+    // Query monthlyUsage table for the current year
+    const [rows] = await pool.execute(
+      "SELECT id, month, year, month_name, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM monthlyUsage WHERE year = ? ORDER BY month ASC",
+      [currentYear]
+    );
+
+    // Helper function to get month name
+    function getMonthName(month) {
+      const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+      return months[month - 1] || '';
+    }
+
+    // Create a map of month -> usage for easy lookup
+    const usageMap = new Map();
+    rows.forEach(row => {
+      usageMap.set(row.month, {
+        id: row.id,
+        month: row.month,
+        year: row.year,
+        month_name: row.month_name || getMonthName(row.month),
+        total_energy: parseFloat(row.total_energy) || 0,
+        total_power: parseFloat(row.total_power) || 0,
+        peak_power: parseFloat(row.peak_power) || 0,
+        average_power: parseFloat(row.average_power) || 0,
+        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+      });
+    });
+
+    // Generate array for all 12 months (January = 1, December = 12)
+    const monthData = [];
+    for (let month = 1; month <= 12; month++) {
+      if (usageMap.has(month)) {
+        monthData.push(usageMap.get(month));
+      } else {
+        // Return empty data for months without records
+        monthData.push({
+          id: null,
+          month: month,
+          year: currentYear,
+          month_name: getMonthName(month),
+          total_energy: 0,
+          total_power: 0,
+          peak_power: 0,
+          average_power: 0,
+          created_at: null,
+          updated_at: null
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Monthly usage data retrieved successfully',
+      data: monthData,
+      year: currentYear
+    });
+  } catch (error) {
+    console.error('Error fetching monthly usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
