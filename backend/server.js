@@ -1298,30 +1298,62 @@ app.get('/api/raw-usage/latest', async (req, res) => {
     );
 
     if (rows.length === 0) {
-      // No data available
+      // No data available - return zeros
       return res.status(200).json({
         success: true,
         message: 'No usage data available yet',
         data: {
-          voltage: "0.0",
-          current: "0.0",
-          power: "0.0",
-          energy: "0.0",
+          voltage: "0.000",
+          current: "0.000",
+          power: "0.000",
+          energy: "0.000",
           timestamp: null
         }
       });
     }
 
     const row = rows[0];
+    const recordTimestamp = row.timestamp;
+    
+    // Check if the data is recent (hardware is active)
+    // If timestamp is older than 2 minutes, consider hardware as off
+    const STALE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+    const now = new Date();
+    let isDataFresh = false;
+    
+    if (recordTimestamp) {
+      const recordDate = recordTimestamp instanceof Date 
+        ? recordTimestamp 
+        : new Date(recordTimestamp);
+      const timeDiff = now.getTime() - recordDate.getTime();
+      isDataFresh = timeDiff <= STALE_THRESHOLD_MS;
+    }
+    
+    // If data is stale (hardware is off), return zeros
+    if (!isDataFresh) {
+      return res.status(200).json({
+        success: true,
+        message: 'Hardware appears to be off - no recent data',
+        data: {
+          voltage: "0.000",
+          current: "0.000",
+          power: "0.000",
+          energy: "0.000",
+          timestamp: recordTimestamp ? (recordTimestamp instanceof Date ? recordTimestamp.toISOString() : recordTimestamp) : null
+        }
+      });
+    }
+    
+    // Data is fresh (hardware is on) - return actual values
     res.status(200).json({
       success: true,
       message: 'Latest usage data retrieved successfully',
       data: {
-        voltage: row['voltage(V)'] || "0.0",
-        current: row['current(A)'] || "0.0",
-        power: row['power(W)'] || "0.0",
-        energy: row['energy(kWh)'] || "0.0",
-        timestamp: row.timestamp ? (row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp) : null
+        voltage: row['voltage(V)'] || "0.000",
+        current: row['current(A)'] || "0.000",
+        power: row['power(W)'] || "0.000",
+        energy: row['energy(kWh)'] || "0.000",
+        timestamp: recordTimestamp ? (recordTimestamp instanceof Date ? recordTimestamp.toISOString() : recordTimestamp) : null
       }
     });
   } catch (error) {
