@@ -1313,25 +1313,14 @@ app.get('/api/raw-usage/latest', async (req, res) => {
     }
 
     const row = rows[0];
-    // Parse voltage and current (they are current/latest values, not accumulated)
-    const voltage = parseFloat(row['voltage(V)']) || 0;
-    const current = parseFloat(row['current(A)']) || 0;
-    
-    // Calculate current power from voltage × current (P = V × I)
-    // This gives us the current power usage, not the accumulated value
-    const currentPower = voltage * current;
-    
-    // Energy is accumulated in the database, so use it as-is
-    const energy = row['energy(kWh)'] || "0.0";
-    
     res.status(200).json({
       success: true,
       message: 'Latest usage data retrieved successfully',
       data: {
-        voltage: voltage.toString(),
-        current: current.toString(),
-        power: currentPower.toString(), // Current power (V × I), not accumulated
-        energy: energy.toString(), // Accumulated energy
+        voltage: row['voltage(V)'] || "0.0",
+        current: row['current(A)'] || "0.0",
+        power: row['power(W)'] || "0.0",
+        energy: row['energy(kWh)'] || "0.0",
         timestamp: row.timestamp ? (row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp) : null
       }
     });
