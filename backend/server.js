@@ -803,6 +803,103 @@ app.get('/api/user/:userId', async (req, res) => {
   }
 });
 
+// Get daily usage for current week (Sunday to Saturday)
+app.get('/api/daily-usage/week', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    // Calculate current week (Sunday to Saturday)
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - dayOfWeek); // Go back to Sunday
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6); // Add 6 days to get Saturday
+    weekEnd.setHours(23, 59, 59, 999);
+
+    // Format dates as YYYY-MM-DD
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+    // Query dailyUsage table for the current week
+    const [rows] = await pool.execute(
+      "SELECT id, date, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM dailyUsage WHERE date >= ? AND date <= ? ORDER BY date ASC",
+      [weekStartStr, weekEndStr]
+    );
+
+    // Create a map of date -> usage for easy lookup
+    const usageMap = new Map();
+    rows.forEach(row => {
+      // MySQL DATE fields are returned as strings in 'YYYY-MM-DD' format
+      // or as Date objects, so handle both cases
+      let dateStr;
+      if (row.date instanceof Date) {
+        dateStr = row.date.toISOString().split('T')[0];
+      } else {
+        // Already a string in 'YYYY-MM-DD' format
+        dateStr = row.date;
+      }
+      
+      usageMap.set(dateStr, {
+        id: row.id,
+        date: dateStr,
+        total_energy: parseFloat(row.total_energy) || 0,
+        total_power: parseFloat(row.total_power) || 0,
+        peak_power: parseFloat(row.peak_power) || 0,
+        average_power: parseFloat(row.average_power) || 0,
+        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+      });
+    });
+
+    // Generate array for all 7 days of the week (Sunday to Saturday)
+    const weekData = [];
+    for (let i = 0; i < 7; i++) {
+      const currentDate = new Date(weekStart);
+      currentDate.setDate(weekStart.getDate() + i);
+      const dateStr = currentDate.toISOString().split('T')[0];
+      
+      if (usageMap.has(dateStr)) {
+        weekData.push(usageMap.get(dateStr));
+      } else {
+        // Return null/empty data for days without records
+        weekData.push({
+          id: null,
+          date: dateStr,
+          total_energy: 0,
+          total_power: 0,
+          peak_power: 0,
+          average_power: 0,
+          created_at: null,
+          updated_at: null
+        });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Daily usage data retrieved successfully',
+      data: weekData,
+      weekStart: weekStartStr,
+      weekEnd: weekEndStr
+    });
+  } catch (error) {
+    console.error('Error fetching daily usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
