@@ -1281,6 +1281,59 @@ app.get('/api/monthly-usage/year-total', async (req, res) => {
   }
 });
 
+// Get latest live usage data from rawUsage table
+app.get('/api/raw-usage/latest', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    // Query rawUsage table for the most recent record
+    const [rows] = await pool.execute(
+      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage ORDER BY timestamp DESC LIMIT 1",
+      []
+    );
+
+    if (rows.length === 0) {
+      // No data available
+      return res.status(200).json({
+        success: true,
+        message: 'No usage data available yet',
+        data: {
+          voltage: "0.0",
+          current: "0.0",
+          power: "0.0",
+          energy: "0.0",
+          timestamp: null
+        }
+      });
+    }
+
+    const row = rows[0];
+    res.status(200).json({
+      success: true,
+      message: 'Latest usage data retrieved successfully',
+      data: {
+        voltage: row['voltage(V)'] || "0.0",
+        current: row['current(A)'] || "0.0",
+        power: row['power(W)'] || "0.0",
+        energy: row['energy(kWh)'] || "0.0",
+        timestamp: row.timestamp ? (row.timestamp instanceof Date ? row.timestamp.toISOString() : row.timestamp) : null
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching latest raw usage:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`🚀 Server is running on port ${PORT}`);
