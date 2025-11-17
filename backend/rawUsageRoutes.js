@@ -46,7 +46,7 @@ module.exports = (pool, previousValuesCache) => {
         const newPower = parseFloat(power) || 0;
         let newEnergy = parseFloat(energy) || 0;
         
-        // FIX for kWh doubling issue:
+        // FIX for kWh doubling issue and sudden jumps:
         // Hardware sends data every 5 minutes, but may calculate energy for 1 hour
         // If energy value seems too large (indicating 1-hour calculation), scale it down
         // Expected: kWh = (watts × 0.0833333hr) / 1000 for 5-minute interval
@@ -55,11 +55,28 @@ module.exports = (pool, previousValuesCache) => {
         // If newEnergy is approximately 12x what it should be, scale it down
         const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000; // kWh for 5 minutes
         const expectedEnergyFor1Hr = (newPower * 1.0) / 1000; // kWh for 1 hour
-        // If newEnergy is close to 1-hour calculation (within 10% tolerance), scale it down
+        
+        // Check for 1-hour calculation (scale down)
         if (newEnergy > 0 && Math.abs(newEnergy - expectedEnergyFor1Hr) < Math.abs(newEnergy - expectedEnergyFor5Min)) {
           // Energy appears to be calculated for 1 hour, scale to 5 minutes
           newEnergy = newEnergy / 12; // 1 hour / 12 intervals = 5 minutes
           console.log(`⚠️ Energy value scaled from ${energy} to ${newEnergy.toFixed(6)} kWh (1-hour to 5-minute conversion)`);
+        }
+        
+        // ADDITIONAL FIX: Detect and prevent sudden large jumps
+        // If the new energy value would cause a jump > 10 kWh in a single update, cap it
+        // This prevents hardware resets or miscalculations from causing massive jumps
+        const energyJump = newEnergy;
+        const MAX_REASONABLE_JUMP = 10.0; // Maximum reasonable energy for a 5-minute interval (10 kWh)
+        // For context: 10 kWh in 5 minutes = 120 kW average power, which is very high for residential
+        
+        if (energyJump > MAX_REASONABLE_JUMP) {
+          console.log(`⚠️ Large energy jump detected: ${energyJump.toFixed(3)} kWh (capping at ${MAX_REASONABLE_JUMP} kWh)`);
+          console.log(`   Existing energy: ${existingEnergy.toFixed(3)} kWh, New energy value: ${energy.toFixed(3)} kWh`);
+          console.log(`   Power: ${newPower.toFixed(3)} W, Expected 5-min energy: ${expectedEnergyFor5Min.toFixed(6)} kWh`);
+          // Cap the energy increment to prevent unrealistic jumps
+          newEnergy = Math.min(newEnergy, MAX_REASONABLE_JUMP);
+          console.log(`   Capped energy increment to: ${newEnergy.toFixed(6)} kWh`);
         }
         
         // Calculate new accumulated values
