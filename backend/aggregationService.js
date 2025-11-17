@@ -11,6 +11,7 @@
 async function updateDailyUsage(date = null, pool) {
   try {
     // Use Philippine timezone (UTC+08:00) for date calculations
+    // This matches the date calculation in rawUsageRoutes.js which also uses Philippine timezone
     const targetDate = date ? new Date(date) : new Date();
     // Get Philippine timezone date (UTC+08:00)
     // Convert to Philippine time by adding 8 hours to UTC
@@ -22,8 +23,10 @@ async function updateDailyUsage(date = null, pool) {
 
     // Get rawUsage data for the date (using Philippine timezone UTC+08:00)
     // Convert timestamp to Philippine timezone before extracting date
+    // Use DESC to get the most recent state (even though there's only one row per day, timestamp gets updated)
+    // Date matching: Both rawUsageRoutes.js and this function use Philippine timezone (+08:00) for date comparison
     const [rawData] = await pool.execute(
-      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ? ORDER BY timestamp ASC LIMIT 1",
+      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ? ORDER BY timestamp DESC LIMIT 1",
       [dateStr]
     );
 
