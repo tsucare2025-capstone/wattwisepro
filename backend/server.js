@@ -1316,8 +1316,9 @@ app.get('/api/raw-usage/latest', async (req, res) => {
     const recordTimestamp = row.timestamp;
     
     // Check if the data is recent (hardware is active)
-    // If timestamp is older than 2 minutes, consider hardware as off
-    const STALE_THRESHOLD_MS = 2 * 60 * 1000; // 2 minutes in milliseconds
+    // If timestamp is older than 8 minutes, consider hardware as off
+    // Hardware sends data every 5 minutes, so 8 minutes accounts for intervals + network delays
+    const STALE_THRESHOLD_MS = 8 * 60 * 1000; // 8 minutes in milliseconds
     const now = new Date();
     let isDataFresh = false;
     
@@ -1376,15 +1377,15 @@ app.listen(PORT, async () => {
     app.use(rawUsageRouter);
     console.log('✅ RawUsage route added: POST /api/raw-usage');
 
-    // Schedule end-of-day batch processing (runs at 00:01 every day)
+    // Schedule end-of-day batch processing (runs at 00:01 every day in server's local timezone)
     // This updates weeklyUsage and monthlyUsage tables
     cron.schedule('1 0 * * *', async () => {
       console.log('⏰ End-of-day batch job triggered');
       await processEndOfDayBatch(pool);
     }, {
-      scheduled: true,
-      timezone: "UTC"
+      scheduled: true
+      // No timezone specified - uses server's local timezone
     });
-    console.log('✅ End-of-day batch job scheduled (runs daily at 00:01 UTC)');
+    console.log('✅ End-of-day batch job scheduled (runs daily at 00:01 local time)');
   }
 });
