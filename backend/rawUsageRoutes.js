@@ -1,7 +1,7 @@
 const express = require('express');
 const { updateDailyUsage } = require('./aggregationService');
 
-module.exports = (pool) => {
+module.exports = (pool, previousValuesCache) => {
   const router = express.Router();
 
   // ESP32 → RAW USAGE INSERT/UPDATE ROUTE
@@ -66,6 +66,16 @@ module.exports = (pool) => {
         const accumulatedPower = existingPower + newPower;
         const accumulatedEnergy = existingEnergy + newEnergy;
         
+        // Update previous values cache BEFORE updating database
+        // This allows live usage endpoint to calculate incremental values (current - previous)
+        if (previousValuesCache) {
+          previousValuesCache.voltage = parseFloat(existing['voltage(V)']) || 0;
+          previousValuesCache.current = parseFloat(existing['current(A)']) || 0;
+          previousValuesCache.power = existingPower;
+          previousValuesCache.energy = existingEnergy;
+          previousValuesCache.timestamp = existingTimestamp;
+        }
+        
         // Update: Replace voltage/current, Add power/energy
         // Update the specific row using its timestamp
         // Use UTC_TIMESTAMP() to store in UTC (database standard), but date calculations use Philippine time
@@ -99,6 +109,16 @@ module.exports = (pool) => {
           "INSERT INTO rawUsage (timestamp, `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`) VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?)",
           [voltage.toString(), current.toString(), power.toString(), energy.toString()]
         );
+        
+        // Update previous values cache for first record of the day
+        // Initialize with zeros so first incremental calculation uses the inserted values
+        if (previousValuesCache) {
+          previousValuesCache.voltage = 0;
+          previousValuesCache.current = 0;
+          previousValuesCache.power = 0;
+          previousValuesCache.energy = 0;
+          previousValuesCache.timestamp = null;
+        }
 
       res.status(201).json({
         success: true,
