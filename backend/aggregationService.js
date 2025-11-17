@@ -10,12 +10,20 @@
  */
 async function updateDailyUsage(date = null, pool) {
   try {
+    // Use Philippine timezone (UTC+08:00) for date calculations
     const targetDate = date ? new Date(date) : new Date();
-    const dateStr = targetDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    // Get Philippine timezone date (UTC+08:00)
+    // Convert to Philippine time by adding 8 hours to UTC
+    const phTime = new Date(targetDate.getTime() + (8 * 60 * 60 * 1000));
+    const phYear = phTime.getUTCFullYear();
+    const phMonth = String(phTime.getUTCMonth() + 1).padStart(2, '0');
+    const phDay = String(phTime.getUTCDate()).padStart(2, '0');
+    const dateStr = `${phYear}-${phMonth}-${phDay}`; // YYYY-MM-DD in Philippine timezone
 
-    // Get rawUsage data for the date
+    // Get rawUsage data for the date (using Philippine timezone UTC+08:00)
+    // Convert timestamp to Philippine timezone before extracting date
     const [rawData] = await pool.execute(
-      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage WHERE DATE(timestamp) = ? ORDER BY timestamp ASC LIMIT 1",
+      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ? ORDER BY timestamp ASC LIMIT 1",
       [dateStr]
     );
 
@@ -68,7 +76,7 @@ async function updateDailyUsage(date = null, pool) {
           average_current = ?,
           average_power = ?,
           record_count = ?,
-          updated_at = NOW()
+          updated_at = UTC_TIMESTAMP()
         WHERE date = ?`,
         [
           voltage,           // total_voltage (using current value as total)
@@ -120,37 +128,43 @@ async function updateDailyUsage(date = null, pool) {
 }
 
 /**
- * Get week start date (Sunday) for a given date
+ * Get week start date (Sunday) for a given date (using Philippine timezone UTC+08:00)
  * Week definition: Sunday to Saturday
  */
 function getWeekStart(date) {
   const d = new Date(date);
-  const day = d.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-  const diff = d.getDate() - day; // Days to subtract to get to Sunday
-  const weekStart = new Date(d.setDate(diff));
-  weekStart.setHours(0, 0, 0, 0);
-  return weekStart.toISOString().split('T')[0];
+  // Convert to Philippine timezone (UTC+08:00) by adding 8 hours
+  const phTime = new Date(d.getTime() + (8 * 60 * 60 * 1000));
+  const day = phTime.getUTCDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  const diff = phTime.getUTCDate() - day; // Days to subtract to get to Sunday
+  const weekStart = new Date(Date.UTC(phTime.getUTCFullYear(), phTime.getUTCMonth(), diff));
+  weekStart.setUTCHours(0, 0, 0, 0);
+  // Convert back to UTC for storage (subtract 8 hours)
+  const weekStartUTC = new Date(weekStart.getTime() - (8 * 60 * 60 * 1000));
+  return weekStartUTC.toISOString().split('T')[0];
 }
 
 /**
- * Get week end date (Saturday) for a given date
+ * Get week end date (Saturday) for a given date (using Philippine timezone UTC+08:00)
  */
 function getWeekEnd(date) {
   const weekStart = getWeekStart(date);
-  const endDate = new Date(weekStart);
-  endDate.setDate(endDate.getDate() + 6); // Add 6 days to get Saturday
+  const endDate = new Date(weekStart + 'T00:00:00Z'); // Parse as UTC
+  endDate.setUTCDate(endDate.getUTCDate() + 6); // Add 6 days to get Saturday
   return endDate.toISOString().split('T')[0];
 }
 
 /**
- * Get ISO week number for a given date
+ * Get ISO week number for a given date (using Philippine timezone UTC+08:00)
  */
 function getWeekNumber(date) {
   const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() + 3 - (d.getDay() + 6) % 7);
-  const week1 = new Date(d.getFullYear(), 0, 4);
-  return 1 + Math.round(((d.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+  // Convert to Philippine timezone (UTC+08:00)
+  const phTime = new Date(d.getTime() + (8 * 60 * 60 * 1000));
+  phTime.setUTCHours(0, 0, 0, 0);
+  phTime.setUTCDate(phTime.getUTCDate() + 3 - (phTime.getUTCDay() + 6) % 7);
+  const week1 = new Date(Date.UTC(phTime.getUTCFullYear(), 0, 4));
+  return 1 + Math.round(((phTime.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getUTCDay() + 6) % 7) / 7);
 }
 
 /**
@@ -164,13 +178,17 @@ async function updateWeeklyUsage(date = null, pool) {
     const weekStart = getWeekStart(targetDate);
     const weekEnd = getWeekEnd(targetDate);
     const weekNum = getWeekNumber(targetDate);
-    const year = targetDate.getFullYear();
+    // Use Philippine timezone year
+    const phTime = new Date(targetDate.getTime() + (8 * 60 * 60 * 1000));
+    const year = phTime.getUTCFullYear();
 
-    // Check if week is complete (past Saturday)
+    // Check if week is complete (past Saturday) - using Philippine timezone
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const weekEndDate = new Date(weekEnd);
-    const isWeekComplete = today > weekEndDate;
+    const todayPH = new Date(today.getTime() + (8 * 60 * 60 * 1000));
+    todayPH.setUTCHours(0, 0, 0, 0);
+    const weekEndDate = new Date(weekEnd + 'T00:00:00Z'); // Parse as UTC
+    const weekEndPH = new Date(weekEndDate.getTime() + (8 * 60 * 60 * 1000));
+    const isWeekComplete = todayPH > weekEndPH;
 
     // Get all dailyUsage records for this week
     const [dailyRecords] = await pool.execute(
@@ -237,7 +255,7 @@ async function updateWeeklyUsage(date = null, pool) {
             average_current = ?,
             average_power = ?,
             days_count = ?,
-            updated_at = NOW()
+            updated_at = UTC_TIMESTAMP()
           WHERE year = ? AND week_number = ?`,
           [
             weekStart, weekEnd,
@@ -297,10 +315,11 @@ function getMonthName(month) {
  */
 async function updateMonthlyUsage(year, month, pool) {
   try {
-    // Check if month is complete
+    // Check if month is complete (using Philippine timezone UTC+08:00)
     const today = new Date();
-    const isMonthComplete = today.getFullYear() > year || 
-                           (today.getFullYear() === year && today.getMonth() + 1 > month);
+    const todayPH = new Date(today.getTime() + (8 * 60 * 60 * 1000));
+    const isMonthComplete = todayPH.getUTCFullYear() > year || 
+                           (todayPH.getUTCFullYear() === year && todayPH.getUTCMonth() + 1 > month);
 
     // Get all weeklyUsage records for this month
     // A week belongs to a month if its week_start_date is in that month
@@ -371,7 +390,7 @@ async function updateMonthlyUsage(year, month, pool) {
             average_current = ?,
             average_power = ?,
             weeks_count = ?,
-            updated_at = NOW()
+            updated_at = UTC_TIMESTAMP()
           WHERE year = ? AND month = ?`,
           [
             getMonthName(month),
@@ -422,14 +441,15 @@ async function processEndOfDayBatch(pool) {
   try {
     console.log('🔄 Starting end-of-day batch processing...');
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
+    const todayPH = new Date(today.getTime() + (8 * 60 * 60 * 1000)); // Philippine time
+    const yesterday = new Date(todayPH);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
 
-    // Update weekly usage for current week
+    // Update weekly usage for current week (using Philippine timezone)
     await updateWeeklyUsage(today, pool);
 
-    // Update monthly usage for current month
-    await updateMonthlyUsage(today.getFullYear(), today.getMonth() + 1, pool);
+    // Update monthly usage for current month (using Philippine timezone)
+    await updateMonthlyUsage(todayPH.getUTCFullYear(), todayPH.getUTCMonth() + 1, pool);
 
     console.log('✅ End-of-day batch processing completed');
     return { success: true };
