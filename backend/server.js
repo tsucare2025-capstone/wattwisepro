@@ -1291,9 +1291,11 @@ app.get('/api/raw-usage/latest', async (req, res) => {
   }
 
   try {
-    // Query rawUsage table for the most recent record
+    // Query rawUsage table for today's data (using Philippine timezone UTC+08:00)
+    // This matches the date logic used in rawUsageRoutes.js
+    // Get the most recent record for today (there's only one row per day, but timestamp gets updated)
     const [rows] = await pool.execute(
-      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage ORDER BY timestamp DESC LIMIT 1",
+      "SELECT `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`, timestamp FROM rawUsage WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = DATE(CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', '+08:00')) ORDER BY timestamp DESC LIMIT 1",
       []
     );
 
