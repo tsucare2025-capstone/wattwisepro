@@ -13,11 +13,13 @@ const PORT = process.env.PORT || 3000;
 
 // In-memory cache to store previous values for calculating incremental differences
 // Used for live usage display (shows what was added, not accumulated total)
+// Also stores previous hardware energy to calculate delta (hardware sends total lifetime energy)
 const previousValuesCache = {
   voltage: 0,
   current: 0,
   power: 0,
   energy: 0,
+  hardwareEnergy: undefined, // Previous total lifetime energy from hardware (for delta calculation)
   timestamp: null
 };
 
@@ -920,77 +922,67 @@ app.get('/api/weekly-usage/recent', async (req, res) => {
   }
 
   try {
-    // Calculate date range for last 4 weeks
+    // Use Philippine timezone (UTC+08:00) for week calculations - consistent with aggregationService
+    // This ensures November 17 and other dates are assigned to the correct week
+    const { getWeekStart, getWeekEnd } = require('./aggregationService');
     const today = new Date();
-    const fourWeeksAgo = new Date(today);
-    fourWeeksAgo.setDate(today.getDate() - 28); // 4 weeks = 28 days
-    fourWeeksAgo.setHours(0, 0, 0, 0);
-
-    const todayStr = today.toISOString().split('T')[0];
-    const fourWeeksAgoStr = fourWeeksAgo.toISOString().split('T')[0];
-
-    // Query weeklyUsage table for the last 4 weeks
-    const [rows] = await pool.execute(
-      "SELECT id, week_start_date, week_end_date, week_number, year, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM weeklyUsage WHERE week_start_date >= ? AND week_start_date <= ? ORDER BY week_start_date DESC LIMIT 4",
-      [fourWeeksAgoStr, todayStr]
-    );
-
-    // Create a map of week_start_date -> usage for easy lookup
-    const usageMap = new Map();
-    rows.forEach(row => {
-      let weekStartStr;
-      if (row.week_start_date instanceof Date) {
-        weekStartStr = row.week_start_date.toISOString().split('T')[0];
-      } else {
-        weekStartStr = row.week_start_date;
-      }
-      
-      let weekEndStr;
-      if (row.week_end_date instanceof Date) {
-        weekEndStr = row.week_end_date.toISOString().split('T')[0];
-      } else {
-        weekEndStr = row.week_end_date;
-      }
-
-      usageMap.set(weekStartStr, {
-        id: row.id,
-        week_start_date: weekStartStr,
-        week_end_date: weekEndStr,
-        week_number: row.week_number,
-        year: row.year,
-        total_energy: parseFloat(row.total_energy) || 0,
-        total_power: parseFloat(row.total_power) || 0,
-        peak_power: parseFloat(row.peak_power) || 0,
-        average_power: parseFloat(row.average_power) || 0,
-        created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
-        updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
-      });
-    });
-
+    
     // Generate array for last 4 weeks (most recent first)
+    // Use the same week calculation logic as updateWeeklyUsage to ensure consistency
     const weekData = [];
     for (let i = 3; i >= 0; i--) {
-      const weekStart = new Date(today);
-      weekStart.setDate(today.getDate() - (i * 7)); // Go back i weeks
-      const dayOfWeek = weekStart.getDay(); // 0 = Sunday
-      weekStart.setDate(weekStart.getDate() - dayOfWeek); // Go back to Sunday
-      weekStart.setHours(0, 0, 0, 0);
+      // Calculate the date for i weeks ago
+      const targetDate = new Date(today);
+      targetDate.setUTCDate(targetDate.getUTCDate() - (i * 7));
       
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekStart.getDate() + 6); // Add 6 days to get Saturday
+      // Use getWeekStart() which correctly uses Philippine timezone
+      const weekStartStr = getWeekStart(targetDate);
+      const weekEndStr = getWeekEnd(targetDate);
       
-      const weekStartStr = weekStart.toISOString().split('T')[0];
+      // Query weeklyUsage table for this specific week
+      const [rows] = await pool.execute(
+        "SELECT id, week_start_date, week_end_date, week_number, year, total_energy, total_power, peak_power, average_power, created_at, updated_at FROM weeklyUsage WHERE week_start_date = ?",
+        [weekStartStr]
+      );
       
-      if (usageMap.has(weekStartStr)) {
-        weekData.push(usageMap.get(weekStartStr));
+      if (rows.length > 0) {
+        const row = rows[0];
+        let weekStartStrFromDb;
+        if (row.week_start_date instanceof Date) {
+          weekStartStrFromDb = row.week_start_date.toISOString().split('T')[0];
+        } else {
+          weekStartStrFromDb = row.week_start_date;
+        }
+        
+        let weekEndStrFromDb;
+        if (row.week_end_date instanceof Date) {
+          weekEndStrFromDb = row.week_end_date.toISOString().split('T')[0];
+        } else {
+          weekEndStrFromDb = row.week_end_date;
+        }
+        
+        weekData.push({
+          id: row.id,
+          week_start_date: weekStartStrFromDb,
+          week_end_date: weekEndStrFromDb,
+          week_number: row.week_number,
+          year: row.year,
+          total_energy: parseFloat(row.total_energy) || 0,
+          total_power: parseFloat(row.total_power) || 0,
+          peak_power: parseFloat(row.peak_power) || 0,
+          average_power: parseFloat(row.average_power) || 0,
+          created_at: row.created_at ? (row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at) : null,
+          updated_at: row.updated_at ? (row.updated_at instanceof Date ? row.updated_at.toISOString() : row.updated_at) : null
+        });
       } else {
         // Return empty data for weeks without records
+        const weekStartDate = new Date(weekStartStr + 'T00:00:00Z');
         weekData.push({
           id: null,
           week_start_date: weekStartStr,
-          week_end_date: weekEnd.toISOString().split('T')[0],
+          week_end_date: weekEndStr,
           week_number: 0,
-          year: weekStart.getFullYear(),
+          year: weekStartDate.getUTCFullYear(),
           total_energy: 0,
           total_power: 0,
           peak_power: 0,
