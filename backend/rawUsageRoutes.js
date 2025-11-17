@@ -42,46 +42,65 @@ module.exports = (pool, previousValuesCache) => {
         
         // Parse existing values (they're stored as VARCHAR, so convert to numbers)
         const existingPower = parseFloat(existing['power(W)']) || 0;
-        const existingEnergy = parseFloat(existing['energy(kWh)']) || 0;
+        const existingAccumulatedEnergy = parseFloat(existing['energy(kWh)']) || 0;
         const newPower = parseFloat(power) || 0;
-        let newEnergy = parseFloat(energy) || 0;
+        const newHardwareEnergy = parseFloat(energy) || 0; // This is TOTAL lifetime energy from hardware
         
-        // FIX for kWh doubling issue and sudden jumps:
-        // Hardware sends data every 5 minutes, but may calculate energy for 1 hour
-        // If energy value seems too large (indicating 1-hour calculation), scale it down
-        // Expected: kWh = (watts × 0.0833333hr) / 1000 for 5-minute interval
-        // If hardware sends 1-hour energy, it would be 12x larger
-        // Check if energy seems like it's for 1 hour (power * 1hr / 1000) vs expected (power * 0.0833333hr / 1000)
-        // If newEnergy is approximately 12x what it should be, scale it down
-        const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000; // kWh for 5 minutes
-        const expectedEnergyFor1Hr = (newPower * 1.0) / 1000; // kWh for 1 hour
+        // CRITICAL FIX: Hardware sends TOTAL lifetime energy, not incremental!
+        // We need to track the previous hardware energy value to calculate delta
+        // Store previous hardware energy in a separate field or cache
+        // For now, we'll use a workaround: check if we need to store previous hardware energy
         
-        // Check for 1-hour calculation (scale down)
-        if (newEnergy > 0 && Math.abs(newEnergy - expectedEnergyFor1Hr) < Math.abs(newEnergy - expectedEnergyFor5Min)) {
-          // Energy appears to be calculated for 1 hour, scale to 5 minutes
-          newEnergy = newEnergy / 12; // 1 hour / 12 intervals = 5 minutes
-          console.log(`⚠️ Energy value scaled from ${energy} to ${newEnergy.toFixed(6)} kWh (1-hour to 5-minute conversion)`);
+        // Get previous hardware energy from cache (if available)
+        // The cache stores the last hardware energy value received from ESP32/PZEM
+        let previousHardwareEnergy = 0;
+        if (previousValuesCache && previousValuesCache.hardwareEnergy !== undefined && previousValuesCache.hardwareEnergy > 0) {
+          previousHardwareEnergy = previousValuesCache.hardwareEnergy;
+          console.log(`✅ Using cached previous hardware energy: ${previousHardwareEnergy.toFixed(3)} kWh`);
+        } else {
+          // First time or cache not available - this means it's the first reading of the day
+          // For the first reading, we can't calculate delta, so we'll use a small initial value
+          // The accumulated energy will start from this first reading
+          // Note: This is a limitation - ideally we'd store previous hardware energy in the database
+          const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+          previousHardwareEnergy = Math.max(0, newHardwareEnergy - expectedEnergyFor5Min);
+          console.log(`⚠️ No previous hardware energy in cache (first reading of day). Estimating previous: ${previousHardwareEnergy.toFixed(3)} kWh`);
         }
         
-        // ADDITIONAL FIX: Detect and prevent sudden large jumps
-        // If the new energy value would cause a jump > 10 kWh in a single update, cap it
-        // This prevents hardware resets or miscalculations from causing massive jumps
-        const energyJump = newEnergy;
-        const MAX_REASONABLE_JUMP = 10.0; // Maximum reasonable energy for a 5-minute interval (10 kWh)
-        // For context: 10 kWh in 5 minutes = 120 kW average power, which is very high for residential
+        // Calculate delta energy (what was consumed since last reading)
+        let deltaEnergy = newHardwareEnergy - previousHardwareEnergy;
         
-        if (energyJump > MAX_REASONABLE_JUMP) {
-          console.log(`⚠️ Large energy jump detected: ${energyJump.toFixed(3)} kWh (capping at ${MAX_REASONABLE_JUMP} kWh)`);
-          console.log(`   Existing energy: ${existingEnergy.toFixed(3)} kWh, New energy value: ${energy.toFixed(3)} kWh`);
-          console.log(`   Power: ${newPower.toFixed(3)} W, Expected 5-min energy: ${expectedEnergyFor5Min.toFixed(6)} kWh`);
-          // Cap the energy increment to prevent unrealistic jumps
-          newEnergy = Math.min(newEnergy, MAX_REASONABLE_JUMP);
-          console.log(`   Capped energy increment to: ${newEnergy.toFixed(6)} kWh`);
+        // Handle edge cases:
+        // 1. If delta is negative, hardware might have reset - use expected calculation
+        // 2. If delta is too large, cap it to reasonable value
+        if (deltaEnergy < 0) {
+          console.log(`⚠️ Negative delta energy (${deltaEnergy.toFixed(3)} kWh). Hardware may have reset. Using expected calculation.`);
+          const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+          deltaEnergy = expectedEnergyFor5Min;
+        } else {
+          // Validate delta is reasonable (max 2 hours worth)
+          const expectedEnergyFor1Hr = (newPower * 1.0) / 1000;
+          const maxReasonableDelta = expectedEnergyFor1Hr * 2;
+          if (deltaEnergy > maxReasonableDelta) {
+            console.log(`⚠️ Delta energy (${deltaEnergy.toFixed(3)} kWh) exceeds maximum reasonable (${maxReasonableDelta.toFixed(3)} kWh). Capping.`);
+            const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+            deltaEnergy = expectedEnergyFor5Min;
+          }
         }
         
         // Calculate new accumulated values
+        // Power: Add current power reading (instantaneous, not accumulated)
+        // Energy: Add only the delta (incremental consumption)
         const accumulatedPower = existingPower + newPower;
-        const accumulatedEnergy = existingEnergy + newEnergy;
+        const accumulatedEnergy = existingAccumulatedEnergy + deltaEnergy;
+        
+        // Log the update for debugging
+        console.log(`📊 Energy update: Hardware total=${newHardwareEnergy.toFixed(3)} kWh, Previous hardware=${previousHardwareEnergy.toFixed(3)} kWh, Delta=${deltaEnergy.toFixed(3)} kWh, Accumulated=${accumulatedEnergy.toFixed(3)} kWh`);
+        
+        // Update cache with current hardware energy for next calculation
+        if (previousValuesCache) {
+          previousValuesCache.hardwareEnergy = newHardwareEnergy;
+        }
         
         // Update previous values cache BEFORE updating database
         // This allows live usage endpoint to calculate incremental values (current - previous)
@@ -89,7 +108,7 @@ module.exports = (pool, previousValuesCache) => {
           previousValuesCache.voltage = parseFloat(existing['voltage(V)']) || 0;
           previousValuesCache.current = parseFloat(existing['current(A)']) || 0;
           previousValuesCache.power = existingPower;
-          previousValuesCache.energy = existingEnergy;
+          previousValuesCache.energy = existingAccumulatedEnergy; // Fixed: use correct variable name
           previousValuesCache.timestamp = existingTimestamp;
         }
         
@@ -122,20 +141,28 @@ module.exports = (pool, previousValuesCache) => {
       } else {
         // No row exists for today - INSERT new row
         // Use UTC_TIMESTAMP() to store in UTC (database standard), but date calculations use Philippine time
+        const newPower = parseFloat(power) || 0;
+        const newHardwareEnergy = parseFloat(energy) || 0;
+        
+        // For first record of the day, we store the hardware energy as-is (it's the starting point)
+        // But we need to track it for delta calculation on next update
         await pool.execute(
           "INSERT INTO rawUsage (timestamp, `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`) VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?)",
-          [voltage.toString(), current.toString(), power.toString(), energy.toString()]
+          [voltage.toString(), current.toString(), power.toString(), newHardwareEnergy.toString()]
         );
         
         // Update previous values cache for first record of the day
-        // Initialize with zeros so first incremental calculation uses the inserted values
+        // Store the hardware energy so we can calculate delta on next update
         if (previousValuesCache) {
           previousValuesCache.voltage = 0;
           previousValuesCache.current = 0;
           previousValuesCache.power = 0;
           previousValuesCache.energy = 0;
+          previousValuesCache.hardwareEnergy = newHardwareEnergy; // Store hardware energy for delta calculation
           previousValuesCache.timestamp = null;
         }
+        
+        console.log(`📊 First record of day: Stored hardware energy=${newHardwareEnergy.toFixed(3)} kWh`);
 
       res.status(201).json({
         success: true,
