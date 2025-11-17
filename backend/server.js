@@ -11,6 +11,16 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// In-memory cache to store previous values for calculating incremental differences
+// Used for live usage display (shows what was added, not accumulated total)
+const previousValuesCache = {
+  voltage: 0,
+  current: 0,
+  power: 0,
+  energy: 0,
+  timestamp: null
+};
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
@@ -1347,15 +1357,32 @@ app.get('/api/raw-usage/latest', async (req, res) => {
       });
     }
     
-    // Data is fresh (hardware is on) - return actual values
+    // Data is fresh (hardware is on) - calculate incremental values (current - previous)
+    // Live usage should show what was added in the latest update, not the accumulated total
+    const currentVoltage = parseFloat(row['voltage(V)']) || 0;
+    const currentCurrent = parseFloat(row['current(A)']) || 0;
+    const currentPower = parseFloat(row['power(W)']) || 0;
+    const currentEnergy = parseFloat(row['energy(kWh)']) || 0;
+    
+    // Voltage and current are replaced (not accumulated), so show current instantaneous values
+    // Power and energy are accumulated, so calculate incremental (what was added)
+    const incrementalVoltage = currentVoltage;
+    const incrementalCurrent = currentCurrent;
+    const incrementalPower = previousValuesCache.timestamp ? (currentPower - previousValuesCache.power) : currentPower;
+    const incrementalEnergy = previousValuesCache.timestamp ? (currentEnergy - previousValuesCache.energy) : currentEnergy;
+    
+    // Ensure non-negative values (in case of data issues)
+    const finalPower = Math.max(0, incrementalPower);
+    const finalEnergy = Math.max(0, incrementalEnergy);
+    
     res.status(200).json({
       success: true,
       message: 'Latest usage data retrieved successfully',
       data: {
-        voltage: row['voltage(V)'] || "0.000",
-        current: row['current(A)'] || "0.000",
-        power: row['power(W)'] || "0.000",
-        energy: row['energy(kWh)'] || "0.000",
+        voltage: incrementalVoltage.toFixed(3),
+        current: incrementalCurrent.toFixed(3),
+        power: finalPower.toFixed(3),
+        energy: finalEnergy.toFixed(3),
         timestamp: recordTimestamp ? (recordTimestamp instanceof Date ? recordTimestamp.toISOString() : recordTimestamp) : null
       }
     });
