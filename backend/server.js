@@ -1155,6 +1155,84 @@ app.get('/api/daily-usage/date/:date', async (req, res) => {
   }
 });
 
+// Get hourly usage for a specific date
+app.get('/api/daily-usage/hourly/:date', async (req, res) => {
+  if (!pool) {
+    return res.status(500).json({
+      success: false,
+      error: 'Database connection not available'
+    });
+  }
+
+  try {
+    const dateStr = req.params.date; // Format: YYYY-MM-DD
+    
+    // Validate date format
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid date format. Use YYYY-MM-DD'
+      });
+    }
+
+    // Query rawUsage table for the specific date, grouped by hour
+    // Convert timestamp to Philippine timezone (+08:00) for hour extraction
+    const [rows] = await pool.execute(
+      `SELECT 
+        HOUR(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) as hour,
+        AVG(CAST(\`power(W)\` AS DECIMAL(10, 3))) as avg_power,
+        MAX(CAST(\`power(W)\` AS DECIMAL(10, 3))) as max_power,
+        MIN(CAST(\`power(W)\` AS DECIMAL(10, 3))) as min_power,
+        COUNT(*) as record_count
+      FROM rawUsage 
+      WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ?
+      GROUP BY HOUR(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00'))
+      ORDER BY hour ASC`,
+      [dateStr]
+    );
+
+    // Initialize array for 24 hours (0-23) with default values
+    const hourlyData = [];
+    for (let i = 0; i < 24; i++) {
+      hourlyData.push({
+        hour: i,
+        wattage: 0.0,
+        max_power: 0.0,
+        min_power: 0.0,
+        record_count: 0
+      });
+    }
+
+    // Fill in data from query results
+    rows.forEach(row => {
+      const hour = parseInt(row.hour);
+      if (hour >= 0 && hour < 24) {
+        hourlyData[hour] = {
+          hour: hour,
+          wattage: parseFloat(row.avg_power) || 0.0,
+          max_power: parseFloat(row.max_power) || 0.0,
+          min_power: parseFloat(row.min_power) || 0.0,
+          record_count: parseInt(row.record_count) || 0
+        };
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Hourly usage data retrieved successfully',
+      data: hourlyData,
+      date: dateStr
+    });
+  } catch (error) {
+    console.error('Error fetching hourly usage for date:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Unknown error',
+      errorCode: error.code
+    });
+  }
+});
+
 // Get current month's usage from monthlyUsage table
 app.get('/api/monthly-usage/current', async (req, res) => {
   if (!pool) {
