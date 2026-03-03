@@ -20,11 +20,11 @@ module.exports = (pool, previousValuesCache) => {
       power === undefined ||
       energy === undefined
     ) {
-        return res.status(400).json({
-          success: false,
-        error: "Missing required parameters: voltage, current, power, energy" 
-        });
-      }
+      return res.status(400).json({
+        success: false,
+        error: "Missing required parameters: voltage, current, power, energy"
+      });
+    }
 
     try {
       // Calculate today's date in Philippine timezone (UTC+08:00) for consistent matching
@@ -42,6 +42,9 @@ module.exports = (pool, previousValuesCache) => {
         [todayDateStr]
       );
 
+      // =========================
+      // UPDATE BRANCH (row exists)
+      // =========================
       if (existingRows.length > 0) {
         // Row exists for today - UPDATE it
         // The SELECT query already filtered by today's date, so we can trust this row is for today
@@ -56,9 +59,8 @@ module.exports = (pool, previousValuesCache) => {
         const newPower = parseFloat(power) || 0;
         const newHardwareEnergy = parseFloat(energy) || 0; // This is TOTAL lifetime energy from hardware
         
-        // CRITICAL FIX: Hardware sends TOTAL lifetime energy, not incremental!
-        // We need to track the previous hardware energy value to calculate delta
-        // Store previous hardware energy in a separate field or cache
+        // Hardware sends TOTAL lifetime energy, not incremental.
+        // We need to track the previous hardware energy value to calculate delta.
         
         // Get previous hardware energy from cache (if available)
         // The cache stores the last hardware energy value received from ESP32/PZEM
@@ -98,7 +100,7 @@ module.exports = (pool, previousValuesCache) => {
         }
         
         // Calculate new accumulated values
-        // Power: Add current power reading (instantaneous, not accumulated)
+        // Power: Add current power reading
         // Energy: Add only the delta (incremental consumption)
         const accumulatedPower = existingPower + newPower;
         const accumulatedEnergy = existingAccumulatedEnergy + deltaEnergy;
@@ -117,13 +119,12 @@ module.exports = (pool, previousValuesCache) => {
           previousValuesCache.voltage = parseFloat(existing['voltage(V)']) || 0;
           previousValuesCache.current = parseFloat(existing['current(A)']) || 0;
           previousValuesCache.power = existingPower;
-          previousValuesCache.energy = existingAccumulatedEnergy; // Fixed: use correct variable name
+          previousValuesCache.energy = existingAccumulatedEnergy;
           previousValuesCache.timestamp = existingTimestamp;
         }
         
         // Update: Replace voltage/current, Add power/energy
         // Use date-based WHERE clause to ensure we're updating today's row
-        // Primary match: date in Philippine timezone (same as SELECT query)
         // Use UTC_TIMESTAMP() to store in UTC (database standard), but date calculations use Philippine time
         const [updateResult] = await pool.execute(
           "UPDATE rawUsage SET `voltage(V)` = ?, `current(A)` = ?, `power(W)` = ?, `energy(kWh)` = ?, timestamp = UTC_TIMESTAMP() WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ?",
@@ -158,38 +159,83 @@ module.exports = (pool, previousValuesCache) => {
           }
         });
       }
-      
-      // INSERT new row for today (if no valid row exists for today after validation)
+
+      // =========================
+      // INSERT BRANCH (no row yet)
+      // =========================
       if (existingRows.length === 0) {
         // No row exists for today - INSERT new row
         // Use UTC_TIMESTAMP() to store in UTC (database standard), but date calculations use Philippine time
         const newPower = parseFloat(power) || 0;
         const newHardwareEnergy = parseFloat(energy) || 0;
         
-        // For first record of the day, we store the hardware energy as-is (it's the starting point)
-        // But we need to track it for delta calculation on next update
+        // IMPORTANT:
+        // Hardware sends TOTAL lifetime energy, not per-day energy.
+        // If we store the lifetime total directly, each new day will include all
+        // previous days (e.g. 106 kWh then 108 kWh instead of ~2 kWh).
+        //
+        // Instead, compute the incremental energy since the last reading and
+        // store that as today's accumulated value.
+        let previousHardwareEnergy = 0;
+        if (previousValuesCache && previousValuesCache.hardwareEnergy !== undefined && previousValuesCache.hardwareEnergy > 0) {
+          previousHardwareEnergy = previousValuesCache.hardwareEnergy;
+          console.log(`✅ [INSERT] Using cached previous hardware energy: ${previousHardwareEnergy.toFixed(3)} kWh`);
+        } else {
+          // First reading ever (or cache empty). Estimate a previous value so that
+          // we only store roughly one reading's worth of energy rather than the
+          // whole lifetime counter.
+          const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+          previousHardwareEnergy = Math.max(0, newHardwareEnergy - expectedEnergyFor5Min);
+          console.log(`⚠️ [INSERT] No previous hardware energy in cache. Estimating previous: ${previousHardwareEnergy.toFixed(3)} kWh`);
+        }
+
+        // Calculate delta energy for this first row of the day
+        let deltaEnergy = newHardwareEnergy - previousHardwareEnergy;
+
+        if (deltaEnergy < 0) {
+          console.log(`⚠️ [INSERT] Negative delta energy (${deltaEnergy.toFixed(3)} kWh). Hardware may have reset. Using expected calculation.`);
+          const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+          deltaEnergy = expectedEnergyFor5Min;
+        } else {
+          // Cap to a reasonable maximum (2 hours worth of energy)
+          const expectedEnergyFor1Hr = (newPower * 1.0) / 1000;
+          const maxReasonableDelta = expectedEnergyFor1Hr * 2;
+          if (deltaEnergy > maxReasonableDelta) {
+            console.log(`⚠️ [INSERT] Delta energy (${deltaEnergy.toFixed(3)} kWh) exceeds maximum reasonable (${maxReasonableDelta.toFixed(3)} kWh). Capping.`);
+            const expectedEnergyFor5Min = (newPower * 0.0833333) / 1000;
+            deltaEnergy = expectedEnergyFor5Min;
+          }
+        }
+
+        // For the first row of the day, the accumulated energy IS the delta
+        const accumulatedEnergy = deltaEnergy;
+        const accumulatedPower = newPower;
+
+        console.log(`📊 [INSERT] First record of day: Hardware total=${newHardwareEnergy.toFixed(3)} kWh, Previous=${previousHardwareEnergy.toFixed(3)} kWh, Delta=${deltaEnergy.toFixed(3)} kWh`);
+
         await pool.execute(
           "INSERT INTO rawUsage (timestamp, `voltage(V)`, `current(A)`, `power(W)`, `energy(kWh)`) VALUES (UTC_TIMESTAMP(), ?, ?, ?, ?)",
-          [voltage.toString(), current.toString(), power.toString(), newHardwareEnergy.toString()]
+          [voltage.toString(), current.toString(), accumulatedPower.toString(), accumulatedEnergy.toString()]
         );
         
         // Update previous values cache for first record of the day
-        // Store the hardware energy so we can calculate delta on next update
         if (previousValuesCache) {
-          previousValuesCache.voltage = 0;
-          previousValuesCache.current = 0;
-          previousValuesCache.power = 0;
-          previousValuesCache.energy = 0;
+          previousValuesCache.voltage = parseFloat(voltage) || 0;
+          previousValuesCache.current = parseFloat(current) || 0;
+          previousValuesCache.power = accumulatedPower;
+          previousValuesCache.energy = accumulatedEnergy;
           previousValuesCache.hardwareEnergy = newHardwareEnergy; // Store hardware energy for delta calculation
           previousValuesCache.timestamp = null;
         }
         
-        console.log(`📊 First record of day: Stored hardware energy=${newHardwareEnergy.toFixed(3)} kWh`);
-
-      res.status(201).json({
-        success: true,
+        res.status(201).json({
+          success: true,
           message: "Data saved successfully",
-          action: "inserted"
+          action: "inserted",
+          accumulated: {
+            power: accumulatedPower,
+            energy: accumulatedEnergy
+          }
         });
 
         // Update dailyUsage in background (non-blocking)
