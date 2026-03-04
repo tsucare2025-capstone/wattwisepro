@@ -10,6 +10,7 @@ import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
+import android.view.ViewGroup
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -239,18 +240,10 @@ if (hourlyData != null) {
     }
     
     private fun setupChart(chart: LineChart, hourlyData: List<myapplication.test.wattwisepro.model.HourlyUsageItem>) {
-        // Calculate chart width dynamically based on number of data points
-        // Give each hour 50dp of space for better readability
-        val dpPerHour = 50f
-        val chartWidthDp = hourlyData.size * dpPerHour
-        val chartWidthPx = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            chartWidthDp,
-            resources.displayMetrics
-        ).toInt()
-        val layoutParams = chart.layoutParams
-        layoutParams.width = chartWidthPx
-        chart.layoutParams = layoutParams
+    // Make the chart fill the dialog width so the 0–23h range is visible
+    val layoutParams = chart.layoutParams
+    layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
+    chart.layoutParams = layoutParams
         
         // Prepare data entries
         val entries = mutableListOf<Entry>()
@@ -270,6 +263,10 @@ if (hourlyData != null) {
         // Create line data
         val lineData = LineData(dataSet)
         chart.data = lineData
+
+        // Show the full 0–23 hour range by default
+        chart.setVisibleXRangeMaximum(24f)
+        chart.moveViewToX(0f)
         
         // Configure X-axis (hours)
         val xAxis = chart.xAxis
