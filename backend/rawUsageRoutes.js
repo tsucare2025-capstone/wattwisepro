@@ -33,7 +33,21 @@ module.exports = (pool, previousValuesCache) => {
       const phYear = phTime.getUTCFullYear();
       const phMonth = String(phTime.getUTCMonth() + 1).padStart(2, '0');
       const phDay = String(phTime.getUTCDate()).padStart(2, '0');
+      const phHour = phTime.getUTCHours(); // 0..23 in Philippine timezone
       const todayDateStr = `${phYear}-${phMonth}-${phDay}`; // YYYY-MM-DD in Philippine timezone
+      const incomingPower = parseFloat(power) || 0;
+
+      // Upsert hourly peak table (one cell per date+hour).
+      // Keeps the maximum instantaneous W seen for the hour.
+      await pool.execute(
+        `INSERT INTO usageHourlyPeak (usage_date, usage_hour, peak_power_w, record_count)
+         VALUES (?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE
+           peak_power_w = GREATEST(peak_power_w, VALUES(peak_power_w)),
+           record_count = record_count + 1,
+           updated_at = CURRENT_TIMESTAMP`,
+        [todayDateStr, phHour, incomingPower]
+      );
       
       // Check if a row exists for today's date (using Philippine timezone UTC+08:00)
       // Use explicit date string comparison to avoid timezone conversion issues
