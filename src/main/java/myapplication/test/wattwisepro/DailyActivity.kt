@@ -2,7 +2,6 @@ package myapplication.test.wattwisepro
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.content.res.Resources
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.LayoutInflater
@@ -10,7 +9,6 @@ import android.widget.Button
 import android.widget.RelativeLayout
 import android.widget.TextView
 import android.widget.Toast
-import android.view.ViewGroup
 import com.github.mikephil.charting.charts.LineChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.Entry
@@ -240,10 +238,17 @@ if (hourlyData != null) {
     }
     
     private fun setupChart(chart: LineChart, hourlyData: List<myapplication.test.wattwisepro.model.HourlyUsageItem>) {
-    // Make the chart fill the dialog width so the 0–23h range is visible
-    val layoutParams = chart.layoutParams
-    layoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT
-    chart.layoutParams = layoutParams
+        // Keep chart wider than dialog so horizontal scroll remains useful for 24 hours.
+        val dpPerHour = 70f
+        val chartWidthDp = hourlyData.size * dpPerHour
+        val chartWidthPx = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            chartWidthDp,
+            resources.displayMetrics
+        ).toInt()
+        val layoutParams = chart.layoutParams
+        layoutParams.width = chartWidthPx
+        chart.layoutParams = layoutParams
         
         // Prepare data entries
         val entries = mutableListOf<Entry>()
@@ -251,21 +256,45 @@ if (hourlyData != null) {
             entries.add(Entry(item.hour.toFloat(), item.wattage.toFloat()))
         }
         
-        // Create dataset
+        // Create main dataset
         val dataSet = LineDataSet(entries, "Wattage (W)")
         dataSet.color = ContextCompat.getColor(this, R.color.dark_blue)
         dataSet.lineWidth = 2f
         dataSet.setCircleColor(ContextCompat.getColor(this, R.color.dark_blue))
-        dataSet.circleRadius = 4f
+        dataSet.circleRadius = 3f
         dataSet.setDrawValues(false) // Hide values on points for cleaner look
-        dataSet.mode = LineDataSet.Mode.CUBIC_BEZIER // Smooth curve
+        dataSet.mode = LineDataSet.Mode.LINEAR
+        dataSet.setDrawCircles(true)
+
+        // Mark the day's peak hour/value clearly
+        val peakItem = hourlyData.maxByOrNull { it.wattage }
+        val lineData = if (peakItem != null && peakItem.wattage > 0.0) {
+            val peakEntry = Entry(peakItem.hour.toFloat(), peakItem.wattage.toFloat())
+            val peakSet = LineDataSet(listOf(peakEntry), "Peak").apply {
+                color = ContextCompat.getColor(this@DailyActivity, android.R.color.holo_red_dark)
+                lineWidth = 0f
+                setDrawCircles(true)
+                circleRadius = 6f
+                setCircleColor(ContextCompat.getColor(this@DailyActivity, android.R.color.holo_red_dark))
+                setDrawValues(true)
+                valueTextSize = 10f
+                valueTextColor = ContextCompat.getColor(this@DailyActivity, android.R.color.holo_red_dark)
+                valueFormatter = object : ValueFormatter() {
+                    override fun getPointLabel(entry: Entry?): String {
+                        return if (entry == null) "" else String.format("%.1fW", entry.y)
+                    }
+                }
+            }
+            LineData(dataSet, peakSet)
+        } else {
+            LineData(dataSet)
+        }
         
-        // Create line data
-        val lineData = LineData(dataSet)
         chart.data = lineData
 
         // Show the full 0–23 hour range by default
         chart.setVisibleXRangeMaximum(24f)
+        chart.setVisibleXRangeMinimum(6f)
         chart.moveViewToX(0f)
         
         // Configure X-axis (hours)
@@ -285,8 +314,10 @@ if (hourlyData != null) {
                 }
             }
         }
-        // Show all labels for better readability when scrolling
-        xAxis.labelCount = hourlyData.size
+        xAxis.axisMinimum = -0.5f
+        xAxis.axisMaximum = 23.5f
+        // Show fewer labels at once; user can scroll horizontally.
+        xAxis.labelCount = 12
         xAxis.granularity = 1f
         xAxis.setAvoidFirstLastClipping(true)
         
@@ -297,6 +328,10 @@ if (hourlyData != null) {
         yAxisLeft.setDrawGridLines(true)
         yAxisLeft.gridColor = ContextCompat.getColor(this, android.R.color.darker_gray)
         yAxisLeft.axisMinimum = 0f
+        val maxWattage = hourlyData.maxOfOrNull { it.wattage } ?: 0.0
+        if (maxWattage > 0.0) {
+            yAxisLeft.axisMaximum = (maxWattage * 1.15).toFloat()
+        }
         
         val yAxisRight = chart.axisRight
         yAxisRight.isEnabled = false // Disable right Y-axis
