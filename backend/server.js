@@ -1175,19 +1175,16 @@ app.get('/api/daily-usage/hourly/:date', async (req, res) => {
       });
     }
 
-    // Query rawUsage table for the specific date, grouped by hour
-    // Convert timestamp to Philippine timezone (+08:00) for hour extraction
+    // Query usageHourlyPeak table for the specific date.
+    // This table stores one row per date+hour with peak instantaneous watts.
     const [rows] = await pool.execute(
       `SELECT 
-        HOUR(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) as hour,
-        AVG(CAST(\`power(W)\` AS DECIMAL(10, 3))) as avg_power,
-        MAX(CAST(\`power(W)\` AS DECIMAL(10, 3))) as max_power,
-        MIN(CAST(\`power(W)\` AS DECIMAL(10, 3))) as min_power,
-        COUNT(*) as record_count
-      FROM rawUsage 
-      WHERE DATE(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00')) = ?
-      GROUP BY HOUR(CONVERT_TZ(timestamp, @@session.time_zone, '+08:00'))
-      ORDER BY hour ASC`,
+        usage_hour as hour,
+        peak_power_w as peak_power,
+        record_count
+      FROM usageHourlyPeak
+      WHERE usage_date = ?
+      ORDER BY usage_hour ASC`,
       [dateStr]
     );
 
@@ -1207,11 +1204,12 @@ app.get('/api/daily-usage/hourly/:date', async (req, res) => {
     rows.forEach(row => {
       const hour = parseInt(row.hour);
       if (hour >= 0 && hour < 24) {
+        const peakPower = parseFloat(row.peak_power) || 0.0;
         hourlyData[hour] = {
           hour: hour,
-          wattage: parseFloat(row.avg_power) || 0.0,
-          max_power: parseFloat(row.max_power) || 0.0,
-          min_power: parseFloat(row.min_power) || 0.0,
+          wattage: peakPower,
+          max_power: peakPower,
+          min_power: peakPower,
           record_count: parseInt(row.record_count) || 0
         };
       }
