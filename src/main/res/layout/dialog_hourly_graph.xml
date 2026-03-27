@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tvLoading"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Loading hourly data..."
+        android:textSize="14sp"
+        android:gravity="center"
+        android:padding="20dp"
+        android:textColor="@color/black" />
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="horizontal"
+        android:fillViewport="true">
+
+        <com.github.mikephil.charting.charts.LineChart
+            android:id="@+id/chartHourly"
+            android:layout_width="match_parent"
+            android:layout_height="400dp"
+            android:visibility="gone" />
+
+    </HorizontalScrollView>
+
+</LinearLayout>
+
