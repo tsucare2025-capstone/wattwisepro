@@ -26,6 +26,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.math.max
 
 class DailyActivity : AppCompatActivity() {
     
@@ -238,16 +239,22 @@ if (hourlyData != null) {
     }
     
     private fun setupChart(chart: LineChart, hourlyData: List<myapplication.test.wattwisepro.model.HourlyUsageItem>) {
-        // Keep chart wider than dialog so horizontal scroll remains useful for 24 hours.
-        val dpPerHour = 70f
+        // Fit dialog width first; if needed expand beyond it so parent can scroll horizontally.
+        val dpPerHour = 85f
         val chartWidthDp = hourlyData.size * dpPerHour
         val chartWidthPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             chartWidthDp,
             resources.displayMetrics
         ).toInt()
+        val dialogMinWidthPx = resources.displayMetrics.widthPixels -
+                TypedValue.applyDimension(
+                    TypedValue.COMPLEX_UNIT_DIP,
+                    64f,
+                    resources.displayMetrics
+                ).toInt()
         val layoutParams = chart.layoutParams
-        layoutParams.width = chartWidthPx
+        layoutParams.width = max(chartWidthPx, dialogMinWidthPx)
         chart.layoutParams = layoutParams
         
         // Prepare data entries
@@ -292,16 +299,14 @@ if (hourlyData != null) {
         
         chart.data = lineData
 
-        // Show the full 0–23 hour range by default
-        chart.setVisibleXRangeMaximum(24f)
-        chart.setVisibleXRangeMinimum(6f)
+        // Start view from the first hour
         chart.moveViewToX(0f)
         
         // Configure X-axis (hours)
         val xAxis = chart.xAxis
         xAxis.position = XAxis.XAxisPosition.BOTTOM
         xAxis.textColor = ContextCompat.getColor(this, android.R.color.black)
-        xAxis.textSize = 10f
+        xAxis.textSize = 9f
         xAxis.setDrawGridLines(false)
         xAxis.valueFormatter = object : ValueFormatter() {
             override fun getFormattedValue(value: Float): String {
@@ -316,9 +321,10 @@ if (hourlyData != null) {
         }
         xAxis.axisMinimum = -0.5f
         xAxis.axisMaximum = 23.5f
-        // Show fewer labels at once; user can scroll horizontally.
+        // Avoid overlapping hour labels on portrait screens.
         xAxis.labelCount = 12
-        xAxis.granularity = 1f
+        xAxis.granularity = 2f
+        xAxis.setLabelRotationAngle(90f)
         xAxis.setAvoidFirstLastClipping(true)
         
         // Configure Y-axis (wattage)
@@ -340,6 +346,7 @@ if (hourlyData != null) {
         chart.description.isEnabled = false
         chart.legend.isEnabled = false
         chart.setTouchEnabled(true)
+        // Parent HorizontalScrollView handles horizontal scrolling.
         chart.setDragEnabled(true)
         chart.setScaleEnabled(true)
         chart.setPinchZoom(true)
